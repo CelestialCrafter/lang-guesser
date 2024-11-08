@@ -2,6 +2,7 @@ package gather
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"math/rand/v2"
@@ -9,7 +10,9 @@ import (
 	"path"
 	"slices"
 	"strings"
+	"sync"
 
+	"github.com/CelestialCrafter/lang-guesser/ratelimit"
 	"github.com/charmbracelet/log"
 	"github.com/google/go-github/v66/github"
 )
@@ -24,11 +27,12 @@ func GetRepos(ctx context.Context, client *github.Client, language string, minSt
 		Sort: "stars",
 	}
 
+	ratelimit.EndpointPermits[ratelimit.Search].Aquire()
 	data, _, err := client.Search.Repositories(ctx, fmt.Sprintf("stars:>=%d language:%s", minStars, language), opts)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// @TODO filter by license?
 	repos := make([]repository, len(data.Repositories))
 	for i, entry := range data.Repositories {
@@ -42,6 +46,8 @@ func GetRepos(ctx context.Context, client *github.Client, language string, minSt
 		}
 	}
 
+	log.Info("fetched repos", "amount", len(repos))
+
 	return repos, nil
 }
 
@@ -51,8 +57,9 @@ type blob struct {
 	Size int
 }
 
-func GetBlobs(ctx context.Context, client *github.Client, repo repository) ([]blob, error) {
-	data, _, err := client.Git.GetTree(ctx, repo.Owner, repo.Name, "master", true)
+func GetBlobs(ctx context.Context, client *github.Client, repo repository, branch string) ([]blob, error) {
+	ratelimit.EndpointPermits[ratelimit.GetTree].Aquire()
+	data, _, err := client.Git.GetTree(ctx, repo.Owner, repo.Name, branch, true)
 	if err != nil {
 		return nil, err
 	}
@@ -70,7 +77,46 @@ func GetBlobs(ctx context.Context, client *github.Client, repo repository) ([]bl
 		})
 	}
 
+	log.Info("fetched blobs", "amount", len(blobs))
+
 	return blobs, nil
+}
+
+func GetDefaultBranch(ctx context.Context, client *github.Client, repo repository) (string, error) {
+	ratelimit.EndpointPermits[ratelimit.GetRepo].Aquire()
+	data, _, err := client.Repositories.Get(ctx, repo.Owner, repo.Name)
+	if err != nil {
+		return "", err
+	}
+
+	if data.DefaultBranch == nil {
+		return "", errors.New("no default branch")
+	}
+
+	return *data.DefaultBranch, nil
+}
+
+func DownloadBlob(ctx context.Context, client *github.Client, repo repository, blob blob, dir string) error {
+	ratelimit.EndpointPermits[ratelimit.GetBlob].Aquire()
+	data, _, err := client.Git.GetBlobRaw(context.Background(), repo.Owner, repo.Name, blob.SHA)
+	if err != nil {
+		return err
+	}
+
+	filepath := path.Join(dir, path.Base(blob.Path)) 
+	file, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+
+	_, err = file.Write(data)
+	if err != nil {
+		return err
+	}
+
+	log.Info("downloaded blob", "path", filepath)
+	
+	return nil
 }
 
 func SortBySize(blobs []blob, optimal int) {
@@ -86,7 +132,7 @@ func FilterBySuffix(blobs []blob, suffix string) {
 }
 
 var (
-	k = 100
+	blobAmount = 50
 	targetKb = 20
 	minStars = 1000
 	language = "rust"
@@ -94,35 +140,45 @@ var (
 )
 
 func Gather() {
-	client := github.NewClient(nil)
-	repos, err := GetRepos(context.Background(), client, language, minStars)
+	ratelimit.ConcurrentPermits.Aquire()
+	defer ratelimit.ConcurrentPermits.Release()
+
+	client := github.NewClient(nil).WithAuthToken(os.Getenv("GITHUB_TOKEN"))
+	ctx := context.Background()
+
+	repos, err := GetRepos(ctx, client, language, minStars)
 	if err != nil {
 		log.Fatal("could not get repositories", "error", err)
 	}
 
-	repo := repos[0]
-	blobs, err := GetBlobs(context.Background(), client, repo)
+	repo := repos[rand.IntN(len(repos))]
+	log.Info("using repository", "repository", repo)
+
+	branch, err := GetDefaultBranch(ctx, client, repo)
+	if err != nil {
+		log.Fatal("could not get default branch", "error", err)
+	}
+
+	blobs, err := GetBlobs(ctx, client, repo, branch)
 	if err != nil {
 		log.Fatal("could not fetch blobs from repo", "error", err, "repository", repo)
 	}
 
 	FilterBySuffix(blobs, languageSuffix)
 	SortBySize(blobs, targetKb * 250)
-	blob := blobs[rand.IntN(k)]
 
-	data, _, err := client.Git.GetBlobRaw(context.Background(), repo.Owner, repo.Name, blob.SHA)
-	if err != nil {
-		log.Fatal("could not fetch blob data", "error", err)
+	wg := sync.WaitGroup{}
+	for i := range blobs[:blobAmount] {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			defer ratelimit.ConcurrentPermits.Release()
+			ratelimit.ConcurrentPermits.Aquire()
+
+			DownloadBlob(ctx, client, repo, blobs[i], "files")
+		}()
 	}
 
-	log.Info("downloading file", "file", blob.Path)
-	file, err := os.Create(path.Base(blob.Path))
-	if err != nil {
-		log.Fatal("could not create file", "error", err)
-	}
-
-	_, err = file.Write(data)
-	if err != nil {
-		log.Fatal("could not write to file", "error", err)
-	}
+	wg.Wait()
 }
+
