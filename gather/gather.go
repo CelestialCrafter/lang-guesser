@@ -103,7 +103,14 @@ func DownloadBlob(ctx context.Context, client *github.Client, repo repository, b
 		return err
 	}
 	
-	db.CreateChallenge(blob.SHA, data, languageSuffix)
+	err = db.CreateChallenge(db.Challenge{
+		Sha: blob.SHA,
+		Code: data,
+		Language: language,
+	})
+	if err != nil {
+		return err
+	}
 
 	log.Info("downloaded blob", "sha", blob.SHA)
 	

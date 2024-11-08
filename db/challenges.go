@@ -39,8 +39,19 @@ func InitChallenges() {
 	log.Info("initialized database")
 }
 
-func CreateChallenge(sha string, code []byte, language string) string {
-	shastruct := new(struct{sha string})
-	challenges.Get(shastruct, "INSERT INTO challenges (sha, code, language) VALUES (?, ?, ?) RETURNING sha", sha, code, language)
-	return shastruct.sha
+type Challenge struct {
+	Sha string `json:"sha"`
+	Code []byte `json:"code"`
+	Language string `json:"language"`
+}
+
+func CreateChallenge(challenge Challenge) error {
+	newChallenge := new(Challenge)
+	return challenges.Get(newChallenge, "INSERT INTO challenges (sha, code, language) VALUES (?, ?, ?)", challenge.Sha, challenge.Code, challenge.Language)
+}
+
+func GetRandomChallenge() (*Challenge, error) {
+	challenge := new(Challenge)
+	err := challenges.Get(challenge, "SELECT * FROM challenges ORDER BY RANDOM() LIMIT 1;")
+	return challenge, err
 }

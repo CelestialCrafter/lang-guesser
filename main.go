@@ -6,6 +6,7 @@ import (
 	"github.com/CelestialCrafter/lang-guesser/common"
 	"github.com/CelestialCrafter/lang-guesser/db"
 	"github.com/CelestialCrafter/lang-guesser/gather"
+	"github.com/CelestialCrafter/lang-guesser/server"
 	"github.com/charmbracelet/log"
 )
 
@@ -16,5 +17,7 @@ func main() {
 
 	if *common.Gather {
 		gather.Gather()
+	} else {
+		server.SetupServer()
 	}
 }
