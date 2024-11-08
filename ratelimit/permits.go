@@ -26,6 +26,7 @@ type concurrentPermits struct {
 
 func (p concurrentPermits) Release() {
 	p.channel <- struct{}{}
+	p.Current++
 }
 
 type endpointPermits struct {
@@ -43,6 +44,7 @@ func timeRefresh(refresh time.Duration) func(permits) {
 			amount := pool.Max - pool.Current
 			for range amount {
 				pool.channel <- struct{}{}
+				pool.Current++
 			}
 
 			time.Sleep(refresh)

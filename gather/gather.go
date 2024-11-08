@@ -7,11 +7,11 @@ import (
 	"math"
 	"math/rand/v2"
 	"os"
-	"path"
 	"slices"
 	"strings"
 	"sync"
 
+	"github.com/CelestialCrafter/lang-guesser/db"
 	"github.com/CelestialCrafter/lang-guesser/ratelimit"
 	"github.com/charmbracelet/log"
 	"github.com/google/go-github/v66/github"
@@ -96,25 +96,16 @@ func GetDefaultBranch(ctx context.Context, client *github.Client, repo repositor
 	return *data.DefaultBranch, nil
 }
 
-func DownloadBlob(ctx context.Context, client *github.Client, repo repository, blob blob, dir string) error {
+func DownloadBlob(ctx context.Context, client *github.Client, repo repository, blob blob) error {
 	ratelimit.EndpointPermits[ratelimit.GetBlob].Aquire()
 	data, _, err := client.Git.GetBlobRaw(context.Background(), repo.Owner, repo.Name, blob.SHA)
 	if err != nil {
 		return err
 	}
+	
+	db.CreateChallenge(blob.SHA, data, languageSuffix)
 
-	filepath := path.Join(dir, path.Base(blob.Path)) 
-	file, err := os.Create(filepath)
-	if err != nil {
-		return err
-	}
-
-	_, err = file.Write(data)
-	if err != nil {
-		return err
-	}
-
-	log.Info("downloaded blob", "path", filepath)
+	log.Info("downloaded blob", "sha", blob.SHA)
 	
 	return nil
 }
@@ -143,7 +134,12 @@ func Gather() {
 	ratelimit.ConcurrentPermits.Aquire()
 	defer ratelimit.ConcurrentPermits.Release()
 
-	client := github.NewClient(nil).WithAuthToken(os.Getenv("GITHUB_TOKEN"))
+	token, ok := os.LookupEnv("GITHUB_TOKEN") 
+	if !ok {
+		log.Fatal("GITHUB_TOKEN not set")
+	}
+
+	client := github.NewClient(nil).WithAuthToken(token)
 	ctx := context.Background()
 
 	repos, err := GetRepos(ctx, client, language, minStars)
@@ -175,7 +171,7 @@ func Gather() {
 			defer ratelimit.ConcurrentPermits.Release()
 			ratelimit.ConcurrentPermits.Aquire()
 
-			DownloadBlob(ctx, client, repo, blobs[i], "files")
+			DownloadBlob(ctx, client, repo, blobs[i])
 		}()
 	}
 
