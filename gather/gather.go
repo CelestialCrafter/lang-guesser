@@ -1,25 +1,25 @@
 package gather
 
 import (
-	"bufio"
-	"bytes"
 	"context"
-	"errors"
-	"fmt"
 	"math"
 	"math/rand/v2"
 	"os"
-	"os/exec"
-	"path"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 
-	"github.com/CelestialCrafter/lang-guesser/db"
 	"github.com/CelestialCrafter/lang-guesser/ratelimit"
 	"github.com/charmbracelet/log"
 	"github.com/google/go-github/v66/github"
+)
+
+var (
+	blobAmount = 120
+	targetKb = 20
+	minStars = 200
+	language = "go"
+	languageSuffix = "go"
 )
 
 type repository struct {
@@ -27,180 +27,10 @@ type repository struct {
 	Owner string
 }
 
-func GetRepos(ctx context.Context, client *github.Client, language string, minStars int) ([]repository, error) {
-	opts := &github.SearchOptions {
-		Sort: "stars",
-	}
-
-	ratelimit.EndpointPermits[ratelimit.Search].Aquire()
-	data, _, err := client.Search.Repositories(ctx, fmt.Sprintf("stars:>=%d language:%s", minStars, language), opts)
-	if err != nil {
-		return nil, err
-	}
-
-	// @TODO filter by license?
-	repos := make([]repository, len(data.Repositories))
-	for i, entry := range data.Repositories {
-		if entry.Name == nil || entry.Owner == nil || entry.Owner.Login == nil {
-			continue
-		}
-
-		repos[i] = repository{
-			Name: *entry.Name,
-			Owner: *entry.Owner.Login,
-		}
-	}
-
-	log.Info("fetched repos", "amount", len(repos))
-
-	return repos, nil
-}
-
 type blob struct {
 	SHA string
 	Path string
 	Size int
-}
-
-func GetBlobs(ctx context.Context, client *github.Client, repo repository, branch string) ([]blob, error) {
-	ratelimit.EndpointPermits[ratelimit.GetTree].Aquire()
-	data, _, err := client.Git.GetTree(ctx, repo.Owner, repo.Name, branch, true)
-	if err != nil {
-		return nil, err
-	}
-
-	blobs := make([]blob, 0, len(data.Entries))
-	for _, entry := range data.Entries {
-		if entry.GetType() != "blob" || entry.SHA == nil || entry.Path == nil {
-			continue
-		}
-
-		blobs = append(blobs, blob{
-			SHA: *entry.SHA,
-			Path: *entry.Path,
-			Size: *entry.Size,
-		})
-	}
-	blobs = slices.Clip(blobs)
-
-	log.Info("fetched blobs", "amount", len(blobs))
-
-	return blobs, nil
-}
-
-func GetDefaultBranch(ctx context.Context, client *github.Client, repo repository) (string, error) {
-	ratelimit.EndpointPermits[ratelimit.GetRepo].Aquire()
-	data, _, err := client.Repositories.Get(ctx, repo.Owner, repo.Name)
-	if err != nil {
-		return "", err
-	}
-
-	if data.DefaultBranch == nil {
-		return "", errors.New("no default branch")
-	}
-
-	return *data.DefaultBranch, nil
-}
-
-func ASTSplitProtocol(data []byte, atEOF bool) (advance int, token []byte, err error) {
-	if atEOF && len(data) == 0 {
-		return 0, nil, nil
-	}
-
-	lengthBytes, section, found := bytes.Cut(data, []byte("|"))
-
-	// gather more bytes for header
-	if !found {
-		return 0, nil, nil
-	}
-
-	length, err := strconv.Atoi(string(lengthBytes))
-	if err != nil {
-		return 0, nil, err
-	}
-
-	// gather more data
-	if !found || len(section) != length {
-		return 0, nil, nil
-	}
-
-	return len(lengthBytes) + length, section, nil
-}
-
-func ParseBlob(data []byte) ([][]byte, error) {
-	cmd := exec.Command("sh", "start.sh")
-
-	cmd.Dir = path.Join("ast-processors", language) 
-	cmd.Stderr = os.Stderr
-
-	stdin, err := cmd.StdinPipe()
-	if err != nil {
-		return nil, err
-	}
-
-	stdout, err := cmd.StdoutPipe()
-	if err != nil {
-		return nil, err
-	}
-
-	err = cmd.Start()
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = stdin.Write(data)
-	if err != nil {
-		return nil, err
-	}
-
-	err = stdin.Close()
-	if err != nil {
-		return nil, err
-	}
-
-	// len(data) is used as an initial size for each section, with 5 sections by default)
-	sections := make([][]byte, 0)
-
-	scanner := bufio.NewScanner(stdout)
-	scanner.Split(ASTSplitProtocol)
-
-	for scanner.Scan() {
-		if scanner.Err() != nil {
-			return nil, err
-		}
-
-		sections = append(sections, scanner.Bytes())
-	}
-
-	return sections, cmd.Wait()
-}
-
-func DownloadBlob(ctx context.Context, client *github.Client, repo repository, blob blob) error {
-	ratelimit.EndpointPermits[ratelimit.GetBlob].Aquire()
-	data, _, err := client.Git.GetBlobRaw(context.Background(), repo.Owner, repo.Name, blob.SHA)
-	if err != nil {
-		return err
-	}
-
-	sections, err := ParseBlob(data)
-	if err != nil {
-		return err
-	}
-
-	for _, data := range sections {
-		err = db.CreateChallenge(db.Challenge{
-			Sha: blob.SHA,
-			Code: data,
-			Language: language,
-		})
-		if err != nil {
-			return err
-		}
-
-		log.Info("downloaded blob", "sha", blob.SHA)
-	}
-
-	return nil
 }
 
 func SortBySize(blobs []blob, optimal int) {
@@ -215,14 +45,6 @@ func FilterBySuffix(blobs []blob, suffix string) []blob {
 	})
 }
 
-var (
-	blobAmount = 50
-	targetKb = 20
-	minStars = 1000
-	language = "rust"
-	languageSuffix = "rs"
-)
-
 func Gather() {
 	ratelimit.ConcurrentPermits.Aquire()
 	defer ratelimit.ConcurrentPermits.Release()
@@ -235,28 +57,30 @@ func Gather() {
 	client := github.NewClient(nil).WithAuthToken(token)
 	ctx := context.Background()
 
+	// select repo
 	repos, err := GetRepos(ctx, client, language, minStars)
 	if err != nil {
 		log.Fatal("could not get repositories", "error", err)
 	}
-
 	repo := repos[rand.IntN(len(repos))]
 	log.Info("using repository", "repository", repo)
 
+	// get blobs from default tree
 	branch, err := GetDefaultBranch(ctx, client, repo)
 	if err != nil {
 		log.Fatal("could not get default branch", "error", err)
 	}
 
-	blobs, err := GetBlobs(ctx, client, repo, branch)
+	blobs, err := GetTree(ctx, client, repo, branch)
 	if err != nil {
 		log.Fatal("could not fetch blobs from repo", "error", err, "repository", repo)
 	}
 
+	// filter and sort
 	blobs = FilterBySuffix(blobs, languageSuffix)
 	SortBySize(blobs, targetKb * 250)
 
-
+	// download and parse blobs
 	if len(blobs) > blobAmount {
 		blobs = blobs[:blobAmount]
 	}
