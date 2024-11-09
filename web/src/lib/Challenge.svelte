@@ -31,6 +31,8 @@
 			language = data.language ?? '';
 			return data;
 		});
+
+	const focus = el => el.focus();
 </script>
 
 <section>
@@ -42,8 +44,10 @@
 
 	<div class="controls">
 	{#await response}
-		<input bind:value={selectedLanguage} list="language-list" />
-		<button onclick={handleSubmit}>Submit</button>
+		<form>
+			<input bind:value={selectedLanguage} list="language-list" use:focus />
+			<button onclick={handleSubmit}>Submit</button>
+		</form>
 
 		<datalist id="language-list">
 			{#each Object.keys(languageMap) as language}
@@ -51,7 +55,7 @@
 			{/each}
 		</datalist>
 	{:then { more } }
-		<button onclick={() => next(more)}>Next</button>
+		<button use:focus onclick={() => next(more)}>Next</button>
 		<span>{selectedLanguage == language ? 'correct!' : 'wrong.'}</span>
 	{:catch error}
 		<span>could not submit challenge: {error.toString()}</span>

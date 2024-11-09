@@ -29,6 +29,6 @@ func svelte(e *echo.Echo) {
 			HTML5: true,
 			Root:  "web/build/",
 		}))
-		e.Static("/public", "web/build/")
+		e.Static("/_app", "web/build/_app")
 	}
 }
