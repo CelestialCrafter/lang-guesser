@@ -1,3 +1,14 @@
-<h1>Welcome to your library project</h1>
-<p>Create your package using @sveltejs/package and preview/showcase your work with SvelteKit</p>
-<p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p>
+<script>
+	import { PUBLIC_API_URL } from '$env/static/public';
+	import Challenge from '$lib/Challenge.svelte';
+	import { onMount } from 'svelte';
+
+	let response = new Promise(() => {});
+	onMount(() => (response = fetch(`${PUBLIC_API_URL}/challenge`).then(res => res.json())));
+</script>
+
+<section>
+	{#await response then { code, id }}
+		<Challenge code={atob(code)} {id} />
+	{/await}
+</section>

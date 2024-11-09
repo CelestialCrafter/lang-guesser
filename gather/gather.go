@@ -170,15 +170,23 @@ func Gather() {
 	FilterBySuffix(blobs, languageSuffix)
 	SortBySize(blobs, targetKb * 250)
 
+
+	if len(blobs) > blobAmount {
+		blobs = blobs[:blobAmount]
+	}
+
 	wg := sync.WaitGroup{}
-	for i := range blobs[:blobAmount] {
+	for i := range blobs {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			defer ratelimit.ConcurrentPermits.Release()
 			ratelimit.ConcurrentPermits.Aquire()
 
-			DownloadBlob(ctx, client, repo, blobs[i])
+			err := DownloadBlob(ctx, client, repo, blobs[i])
+			if err != nil {
+				log.Error("could not download blob", "error", err)
+			}
 		}()
 	}
 

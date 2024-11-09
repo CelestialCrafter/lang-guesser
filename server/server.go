@@ -3,14 +3,13 @@ package server
 import (
 	"log"
 	"os"
-	"time"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
 
 const (
-	bindAddress      = ":8000"
+	bindAddress      = ":8080"
 	svelteDevAddress = "http://localhost:5173"
 )
 
@@ -35,12 +34,6 @@ func SetupServer() {
 
 	e.Use(middleware.RequestID())
 	e.Use(middleware.CORS())
-	e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
-		Skipper:      middleware.DefaultSkipper,
-		ErrorMessage: "response timed out",
-		Timeout:      30 * time.Second,
-	}))
-
 	setupRoutes(e)
 
 	finalBindAddress := bindAddress

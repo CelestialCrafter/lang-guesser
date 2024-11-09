@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 	"github.com/puzpuzpuz/xsync/v3"
 )
 
-var runningChallenges = xsync.NewMapOf[int64, *db.Challenge]()
+var runningChallenges = xsync.NewMapOf[int64, db.Challenge]()
 
 func GetChallenge(c echo.Context) error {
 	challenge, err := db.GetRandomChallenge()
@@ -17,9 +18,44 @@ func GetChallenge(c echo.Context) error {
 		return jsonError(c, http.StatusInternalServerError, err)
 	}
 
-	runningChallenges.Store(time.Now().UnixNano(),  challenge)
+	id := time.Now().UnixMicro()
+	runningChallenges.Store(id,  *challenge)
 
 	challenge.Language = ""
 	challenge.Sha = ""
-	return c.JSON(http.StatusOK, challenge)
+	idedChallenge := struct{
+		Id int64 `json:"id"`
+		*db.Challenge
+	}{
+		Challenge: challenge,
+		Id: id,
+	}
+	return c.JSON(http.StatusOK, idedChallenge)
+}
+
+func PostChallenge(c echo.Context) error {
+	var params struct{
+		Id int64 `json:"id"`
+		Language string `json:"language"`
+	}
+
+	err := c.Bind(&params)
+	if err != nil {
+		return jsonError(c, http.StatusInternalServerError, fmt.Errorf("could not bind params: %w", err))
+	}
+
+	challenge, ok := runningChallenges.LoadAndDelete(params.Id)
+	if !ok {
+		return jsonError(c, http.StatusNotFound, fmt.Errorf("challenge id not found"))
+	}
+
+	return c.JSON(http.StatusOK, struct{
+		Time time.Duration `json:"time"`
+		Language string `json:"language"`
+		More bool `json:"more"`
+	}{
+		Time: time.Since(time.UnixMicro(params.Id)),
+		Language: challenge.Language,
+		More: true,
+	})
 }

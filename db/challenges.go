@@ -1,6 +1,7 @@
 package db
 
 import (
+	"fmt"
 	"os"
 
 	"github.com/charmbracelet/log"
@@ -46,12 +47,20 @@ type Challenge struct {
 }
 
 func CreateChallenge(challenge Challenge) error {
-	newChallenge := new(Challenge)
-	return challenges.Get(newChallenge, "INSERT INTO challenges (sha, code, language) VALUES (?, ?, ?)", challenge.Sha, challenge.Code, challenge.Language)
+	_, err := challenges.Exec("INSERT INTO challenges (sha, code, language) VALUES (?, ?, ?)", challenge.Sha, challenge.Code, challenge.Language)
+	if err != nil {
+		return fmt.Errorf("database error: %w", err)
+	}
+
+	return nil
 }
 
 func GetRandomChallenge() (*Challenge, error) {
 	challenge := new(Challenge)
 	err := challenges.Get(challenge, "SELECT * FROM challenges ORDER BY RANDOM() LIMIT 1;")
-	return challenge, err
+	if err != nil {
+		return nil, fmt.Errorf("database error: %w", err)
+	}
+
+	return challenge, nil
 }
