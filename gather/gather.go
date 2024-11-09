@@ -1,13 +1,18 @@
 package gather
 
 import (
+	"bufio"
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
 	"math"
 	"math/rand/v2"
 	"os"
+	"os/exec"
+	"path"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -64,7 +69,7 @@ func GetBlobs(ctx context.Context, client *github.Client, repo repository, branc
 		return nil, err
 	}
 
-	blobs := make([]blob, len(data.Entries))
+	blobs := make([]blob, 0, len(data.Entries))
 	for _, entry := range data.Entries {
 		if entry.GetType() != "blob" || entry.SHA == nil || entry.Path == nil {
 			continue
@@ -76,6 +81,7 @@ func GetBlobs(ctx context.Context, client *github.Client, repo repository, branc
 			Size: *entry.Size,
 		})
 	}
+	blobs = slices.Clip(blobs)
 
 	log.Info("fetched blobs", "amount", len(blobs))
 
@@ -96,24 +102,104 @@ func GetDefaultBranch(ctx context.Context, client *github.Client, repo repositor
 	return *data.DefaultBranch, nil
 }
 
+func ASTSplitProtocol(data []byte, atEOF bool) (advance int, token []byte, err error) {
+	if atEOF && len(data) == 0 {
+		return 0, nil, nil
+	}
+
+	lengthBytes, section, found := bytes.Cut(data, []byte("|"))
+
+	// gather more bytes for header
+	if !found {
+		return 0, nil, nil
+	}
+
+	length, err := strconv.Atoi(string(lengthBytes))
+	if err != nil {
+		return 0, nil, err
+	}
+
+	// gather more data
+	if !found || len(section) != length {
+		return 0, nil, nil
+	}
+
+	return len(lengthBytes) + length, section, nil
+}
+
+func ParseBlob(data []byte) ([][]byte, error) {
+	cmd := exec.Command("sh", "start.sh")
+
+	cmd.Dir = path.Join("ast-processors", language) 
+	cmd.Stderr = os.Stderr
+
+	stdin, err := cmd.StdinPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	stdout, err := cmd.StdoutPipe()
+	if err != nil {
+		return nil, err
+	}
+
+	err = cmd.Start()
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = stdin.Write(data)
+	if err != nil {
+		return nil, err
+	}
+
+	err = stdin.Close()
+	if err != nil {
+		return nil, err
+	}
+
+	// len(data) is used as an initial size for each section, with 5 sections by default)
+	sections := make([][]byte, 0)
+
+	scanner := bufio.NewScanner(stdout)
+	scanner.Split(ASTSplitProtocol)
+
+	for scanner.Scan() {
+		if scanner.Err() != nil {
+			return nil, err
+		}
+
+		sections = append(sections, scanner.Bytes())
+	}
+
+	return sections, cmd.Wait()
+}
+
 func DownloadBlob(ctx context.Context, client *github.Client, repo repository, blob blob) error {
 	ratelimit.EndpointPermits[ratelimit.GetBlob].Aquire()
 	data, _, err := client.Git.GetBlobRaw(context.Background(), repo.Owner, repo.Name, blob.SHA)
 	if err != nil {
 		return err
 	}
-	
-	err = db.CreateChallenge(db.Challenge{
-		Sha: blob.SHA,
-		Code: data,
-		Language: language,
-	})
+
+	sections, err := ParseBlob(data)
 	if err != nil {
 		return err
 	}
 
-	log.Info("downloaded blob", "sha", blob.SHA)
-	
+	for _, data := range sections {
+		err = db.CreateChallenge(db.Challenge{
+			Sha: blob.SHA,
+			Code: data,
+			Language: language,
+		})
+		if err != nil {
+			return err
+		}
+
+		log.Info("downloaded blob", "sha", blob.SHA)
+	}
+
 	return nil
 }
 
@@ -123,8 +209,8 @@ func SortBySize(blobs []blob, optimal int) {
 	})
 }
 
-func FilterBySuffix(blobs []blob, suffix string) {
-	slices.DeleteFunc(blobs, func(b blob) bool {
+func FilterBySuffix(blobs []blob, suffix string) []blob {
+	return slices.DeleteFunc(blobs, func(b blob) bool {
 		return !strings.HasSuffix(b.Path, suffix)
 	})
 }
@@ -167,7 +253,7 @@ func Gather() {
 		log.Fatal("could not fetch blobs from repo", "error", err, "repository", repo)
 	}
 
-	FilterBySuffix(blobs, languageSuffix)
+	blobs = FilterBySuffix(blobs, languageSuffix)
 	SortBySize(blobs, targetKb * 250)
 
 

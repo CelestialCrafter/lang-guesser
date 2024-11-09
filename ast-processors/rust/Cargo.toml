@@ -1,0 +1,9 @@
+[package]
+name = "rust"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+eyre = "0.6.12"
+quote = "1.0.37"
+syn = { version = "2.0.87", features = ["full", "parsing", "printing"] }

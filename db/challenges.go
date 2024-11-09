@@ -29,8 +29,8 @@ func InitChallenges() {
 	}
 
 	_, err = challenges.Exec(`CREATE TABLE IF NOT EXISTS challenges (
-		sha TEXT PRIMARY KEY,
-		code BLOB NOT NULL,
+		sha TEXT NOT NULL,
+		code BLOB PRIMARY KEY,
 		language TEXT NOT NULL
 	);`)
 	if err != nil {
