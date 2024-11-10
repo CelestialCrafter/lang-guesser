@@ -27,7 +27,7 @@ func main() {
 			continue
 		}
 
-		length := strconv.Itoa(int(fn.End() - fn.Pos()))
+		length := strconv.Itoa(int(fn.End() - fn.Pos() + 1))
 		os.Stdout.Write(append([]byte(length), byte('|')))
 		os.Stdout.Write(data[fn.Pos() - 1:fn.End()])
 	}
