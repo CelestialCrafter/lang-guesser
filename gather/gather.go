@@ -21,7 +21,7 @@ var (
 	minStars = 200
 )
 
-var suffixes = map[string]string{
+var LangToSuffix = map[string]string{
 	"go": "go",
 	"rust": "rs",
 	"python": "py",
@@ -51,7 +51,7 @@ func FilterBySuffix(blobs []blob, suffix string) []blob {
 }
 
 func Gather() {
-	_, ok := suffixes[*common.Gather]
+	_, ok := LangToSuffix[*common.Gather]
 	if !ok {
 		log.Fatal("language not supported")
 	}
@@ -87,7 +87,7 @@ func Gather() {
 	}
 
 	// filter and sort
-	blobs = FilterBySuffix(blobs, suffixes[*common.Gather])
+	blobs = FilterBySuffix(blobs, LangToSuffix[*common.Gather])
 	SortBySize(blobs, targetKb * 250)
 
 	// download and parse blobs

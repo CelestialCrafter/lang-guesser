@@ -115,14 +115,14 @@ func DownloadBlob(ctx context.Context, client *github.Client, repo repository, b
 			return err
 		}
 
-		mainPath := fmt.Sprintf("%s.%s", "main", suffixes[*common.Gather]) 
+		mainPath := fmt.Sprintf("%s.%s", "main", LangToSuffix[*common.Gather]) 
 		err = os.WriteFile(path.Join(basePath, mainPath), data, 0o666)
 		if err != nil {
 			return err
 		}
 
 		for i, section := range sections {
-			sectionPath := fmt.Sprintf("%s.%s", strconv.Itoa(i), suffixes[*common.Gather])
+			sectionPath := fmt.Sprintf("%s.%s", strconv.Itoa(i), LangToSuffix[*common.Gather])
 			err := os.WriteFile(path.Join(basePath, sectionPath), section, 0o666)
 			if err != nil {
 				log.Error("could not save file", "error", err)
