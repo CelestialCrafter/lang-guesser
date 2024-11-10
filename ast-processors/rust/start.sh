@@ -1,1 +1,1 @@
-cargo run
+target/debug/rust

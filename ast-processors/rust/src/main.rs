@@ -1,30 +1,19 @@
-use std::{io::{self, Read, Write}, process::{Command, Stdio}, thread};
+use std::io::{self, Read, Write};
 
-use eyre::{eyre, OptionExt, Result};
-use syn::Item;
-use quote::ToTokens;
+use syn::{File, ImplItem, Item, ItemFn, ItemImpl};
 
-fn format_code(unformatted: &[u8], mut formatted: &mut Vec<u8>) -> Result<()> {
-    let mut cmd = Command::new("rustfmt");
-    cmd.arg("--edition").arg("2021");
-    cmd.stdin(Stdio::piped()).stdout(Stdio::piped());
-
-    let mut child = cmd.spawn()?;
-    let mut stdin = child.stdin.take().ok_or_eyre("could not take stdin")?;
-    let mut stdout = child.stdout.take().ok_or_eyre("could not take stdout")?;
-
-    let unformatted = unformatted.to_vec();
-    let handle = thread::spawn(move || stdin.write_all(&unformatted));
-
-    io::copy(&mut stdout, &mut formatted)?;
-    child.wait()?;
-
-    match handle.join() {
-        Ok(result) => result?,
-        Err(_) => return Err(eyre!("stdin handle errored"))
-    }
-
-    Ok(())
+fn impl_functions(impl_item: ItemImpl) -> Vec<Item> {
+    impl_item.items.into_iter()
+        .filter_map(|i| if let ImplItem::Fn(function) = i {
+            Some(function)
+        } else {
+            None
+        }).map(|i| ItemFn {
+            attrs: i.attrs,
+            sig: i.sig,
+            vis: i.vis,
+            block: Box::new(i.block)
+        }).map(|i| i.into()).collect()
 }
 
 fn main() {
@@ -32,21 +21,21 @@ fn main() {
     io::stdin().read_to_string(data).expect("could not read from stdin");
 
     let file = syn::parse_file(data).expect("could not read syntax");
-
-    let functions = file.items.iter().filter_map(|item| if let Item::Fn(func) = item {
-        Some(func)
-    } else {
-        None
-    });
+    let items = file.items.into_iter().filter_map(|item| Some(match item {
+        Item::Fn(_) => vec![item],
+        Item::Impl(impl_item) => impl_functions(impl_item),
+        _ => return None
+    })).flatten();
 
     let mut stdout = io::stdout();
-    for function in functions {
-        let string = function.into_token_stream().to_string();
-
-        let mut formatted = Vec::new();
-        format_code(string.as_bytes(), &mut formatted).expect("could not format code");
+    for item in items {
+        let formatted = prettyplease::unparse(&File {
+            shebang: None,
+            attrs: vec![],
+            items: vec![item]
+        });
 
         let len = formatted.len().to_string();
-        stdout.write_all(&[len.as_bytes(), &[b'|'], &formatted].concat()).expect("could not write to stdout");
+        stdout.write_all(&[len.as_bytes(), &[b'|'], formatted.as_bytes()].concat()).expect("could not write to stdout");
     }
 }
