@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"fmt"
 	"os"
 	"os/exec"
 	"path"
@@ -107,10 +108,34 @@ func DownloadBlob(ctx context.Context, client *github.Client, repo repository, b
 		return err
 	}
 
-	for _, data := range sections {
+	if *common.Testcases && len(sections) > 0 {
+		basePath := path.Join("testcases", blob.SHA)
+		err := os.Mkdir(basePath, os.ModePerm)
+		if err != nil {
+			return err
+		}
+
+		mainPath := fmt.Sprintf("%s.%s", "main", suffixes[*common.Gather]) 
+		err = os.WriteFile(path.Join(basePath, mainPath), data, 0o666)
+		if err != nil {
+			return err
+		}
+
+		for i, section := range sections {
+			sectionPath := fmt.Sprintf("%s.%s", strconv.Itoa(i), suffixes[*common.Gather])
+			err := os.WriteFile(path.Join(basePath, sectionPath), section, 0o666)
+			if err != nil {
+				log.Error("could not save file", "error", err)
+			}
+		}
+
+		return nil
+	}
+
+	for _, section := range sections {
 		err = db.CreateChallenge(db.Challenge{
 			Sha: blob.SHA,
-			Code: data,
+			Code: section,
 			Language: *common.Gather,
 		})
 		if err != nil {
