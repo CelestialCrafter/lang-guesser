@@ -71,11 +71,12 @@ func testTestcase(t *testing.T, base string) {
 
 	for _, section := range sections {
 		hash := sha1.Sum(section)
+		hex := hex.EncodeToString(hash[:])
 		_, ok := expectedSections[hash]
 		if !ok {
-			t.Errorf("section failed checksum. got: %s", hash)
+			t.Errorf("section failed checksum. got: %s", hex)
 		}
 
-		t.Logf("section passed: %s", hex.EncodeToString(hash[:]))
+		t.Logf("section passed: %s", hex)
 	}
 }
