@@ -4,15 +4,15 @@
 	import { onMount } from 'svelte';
 
 	let response = $state(new Promise(() => {}));
-	const loadNewChallenge = () => (response = fetch(`${PUBLIC_API_URL}/challenge`).then(res => res.json()));
+	const loadNewChallenge = () => (response = fetch(`${PUBLIC_API_URL}/api/challenge`).then(res => res.text()));
 	onMount(loadNewChallenge);
 </script>
 
 <section>
 	{#await response}
 		<span>loading challenge...</span>
-	{:then { code, id }}
-		<Challenge next={more => more && loadNewChallenge()} code={atob(code)} {id} />
+	{:then code}
+		<Challenge next={more => more && loadNewChallenge()} {code} />
 	{:catch error}
 		<span>could not load challenge: {error.toString()}</span>
 	{/await}

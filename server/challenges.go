@@ -1,6 +1,7 @@
 package server
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"time"
@@ -10,52 +11,73 @@ import (
 	"github.com/puzpuzpuz/xsync/v3"
 )
 
-var runningChallenges = xsync.NewMapOf[int64, db.Challenge]()
+type session struct {
+	CurrentChallenge *db.Challenge
+	CurrentStart time.Time
+	Past []struct {
+		Challenge db.Challenge
+		Guessed string
+		Duration time.Duration
+	}
+}
+var sessions = xsync.NewMapOf[int64, *session]()
+var id = time.Now().UnixNano()
 
-func GetChallenge(c echo.Context) error {
+func NewChallenge(c echo.Context) error {
+	session, _ := sessions.Compute(id, func(oldValue *session, loaded bool) (newValue *session, delete bool) {
+		if loaded {
+			return oldValue, false
+		}
+
+		return new(session), false
+	})
+
 	challenge, err := db.GetRandomChallenge()
 	if err != nil {
 		return jsonError(c, http.StatusInternalServerError, err)
 	}
 
-	id := time.Now().UnixMicro()
-	runningChallenges.Store(id,  *challenge)
-
-	challenge.Language = ""
-	challenge.Sha = ""
-	idedChallenge := struct{
-		Id int64 `json:"id"`
-		*db.Challenge
-	}{
-		Challenge: challenge,
-		Id: id,
-	}
-	return c.JSON(http.StatusOK, idedChallenge)
+	session.CurrentChallenge = challenge
+	session.CurrentStart = time.Now()
+	return c.Blob(http.StatusOK, "text/plain", challenge.Code)
 }
 
-func PostChallenge(c echo.Context) error {
+func SubmitChallenge(c echo.Context) error {
 	var params struct{
-		Id int64 `json:"id"`
 		Language string `json:"language"`
 	}
 
 	err := c.Bind(&params)
 	if err != nil {
-		return jsonError(c, http.StatusInternalServerError, fmt.Errorf("could not bind params: %w", err))
+		return jsonError(c, http.StatusBadRequest, fmt.Errorf("could not bind params: %w", err))
 	}
 
-	challenge, ok := runningChallenges.LoadAndDelete(params.Id)
+	session, ok := sessions.Load(id)
 	if !ok {
-		return jsonError(c, http.StatusNotFound, fmt.Errorf("challenge id not found"))
+		return jsonError(c, http.StatusBadRequest, errors.New("session does not exist"))
 	}
+
+	if session.CurrentChallenge == nil {
+		return jsonError(c, http.StatusBadRequest, errors.New("no challenge started"))
+	}
+
+	duration := time.Since(session.CurrentStart)
+	session.Past = append(session.Past, struct{Challenge db.Challenge; Guessed string; Duration time.Duration}{
+		Challenge: *session.CurrentChallenge,
+		Guessed: params.Language,
+		Duration: duration,
+	})
+
+	language := session.CurrentChallenge.Language
+	session.CurrentChallenge = nil
 
 	return c.JSON(http.StatusOK, struct{
-		Time time.Duration `json:"time"`
+		Duration float64 `json:"duration"`
 		Language string `json:"language"`
 		More bool `json:"more"`
 	}{
-		Time: time.Since(time.UnixMicro(params.Id)),
-		Language: challenge.Language,
+		Duration: duration.Seconds(),
+		Language: language,
 		More: true,
 	})
 }

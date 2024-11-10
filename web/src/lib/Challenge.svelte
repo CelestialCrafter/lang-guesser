@@ -8,7 +8,8 @@
 	let { next, code, id } = $props();
 	let response = $state(new Promise(() => {}));
 	let language = $state('');
-	let selectedLanguage = $state('');
+	let duration = $state(0);
+	let languageInput = $state('');
 
 	const languageMap = {
 		rust: rust,
@@ -19,20 +20,34 @@
 	};
 
 	const handleSubmit = () =>
-		response = fetch(`${PUBLIC_API_URL}/challenge`, {
+		response = fetch(`${PUBLIC_API_URL}/api/challenge`, {
 			method: 'POST',
-			body: JSON.stringify({ id, language: selectedLanguage }),
+			body: JSON.stringify({ id, language: languageInput }),
 			headers: {
 				'Content-Type': 'application/json'
 			}
 		})
 		.then(res => res.json())
 		.then(data => {
-			language = data.language ?? '';
+			language = data.language;
+			duration = data.duration;
 			return data;
 		});
 
 	const focus = el => el.focus();
+	const setstart = () => {
+		$effect(() => {
+			let last_time = performance.now();
+			const update = time => {
+				frame = requestAnimationFrame(update);
+				duration += (time - last_time) / 1000;
+				last_time = time
+			};
+
+			let frame = requestAnimationFrame(update);
+			return () => cancelAnimationFrame(frame);
+		});
+	};
 </script>
 
 <section>
@@ -45,8 +60,9 @@
 	<div class="controls">
 	{#await response}
 		<form>
-			<input bind:value={selectedLanguage} list="language-list" use:focus />
+			<input bind:value={languageInput} list="language-list" use:focus />
 			<button onclick={handleSubmit}>Submit</button>
+			<span use:setstart>{duration.toFixed(2)}s</span>
 		</form>
 
 		<datalist id="language-list">
@@ -56,7 +72,7 @@
 		</datalist>
 	{:then { more } }
 		<button use:focus onclick={() => next(more)}>Next</button>
-		<span>{selectedLanguage == language ? 'correct!' : 'wrong.'}</span>
+		<span>{languageInput == language ? 'correct!' : 'wrong.'} {duration.toFixed(2)}s</span>
 	{:catch error}
 		<span>could not submit challenge: {error.toString()}</span>
 	{/await}

@@ -14,6 +14,6 @@ func setupRoutes(e *echo.Echo) {
 	})
 
 	a := e.Group("/api")
-	a.GET("/challenge", GetChallenge).Name = "get-challenge"
-	a.POST("/challenge", PostChallenge).Name = "post-challenge"
+	a.GET("/challenge", NewChallenge).Name = "new-challenge"
+	a.POST("/challenge", SubmitChallenge).Name = "submit-challenge"
 }
