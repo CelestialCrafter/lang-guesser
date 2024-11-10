@@ -76,7 +76,5 @@ func testTestcase(t *testing.T, base string) {
 		if !ok {
 			t.Errorf("section failed checksum. got: %s", hex)
 		}
-
-		t.Logf("section passed: %s", hex)
 	}
 }

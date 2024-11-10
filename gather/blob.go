@@ -39,7 +39,7 @@ func ASTSplitProtocol(data []byte, atEOF bool) (advance int, token []byte, err e
 		return 0, nil, nil
 	}
 
-	return index + length, data[index:index + length], nil
+	return index + length + 1, data[index:index + length], nil
 }
 
 func ParseBlob(data []byte) ([][]byte, error) {
