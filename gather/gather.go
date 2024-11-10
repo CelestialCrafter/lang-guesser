@@ -9,18 +9,23 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/CelestialCrafter/lang-guesser/common"
 	"github.com/CelestialCrafter/lang-guesser/ratelimit"
 	"github.com/charmbracelet/log"
 	"github.com/google/go-github/v66/github"
 )
 
 var (
-	blobAmount = 120
+	blobAmount = 50
 	targetKb = 20
 	minStars = 200
-	language = "go"
-	languageSuffix = "go"
 )
+
+var suffixes = map[string]string{
+	"go": "go",
+	"rust": "rs",
+	"python": "py",
+}
 
 type repository struct {
 	Name string
@@ -46,6 +51,11 @@ func FilterBySuffix(blobs []blob, suffix string) []blob {
 }
 
 func Gather() {
+	_, ok := suffixes[*common.Gather]
+	if !ok {
+		log.Fatal("language not supported")
+	}
+
 	ratelimit.ConcurrentPermits.Aquire()
 	defer ratelimit.ConcurrentPermits.Release()
 
@@ -58,7 +68,7 @@ func Gather() {
 	ctx := context.Background()
 
 	// select repo
-	repos, err := GetRepos(ctx, client, language, minStars)
+	repos, err := GetRepos(ctx, client, *common.Gather, minStars)
 	if err != nil {
 		log.Fatal("could not get repositories", "error", err)
 	}
@@ -77,7 +87,7 @@ func Gather() {
 	}
 
 	// filter and sort
-	blobs = FilterBySuffix(blobs, languageSuffix)
+	blobs = FilterBySuffix(blobs, suffixes[*common.Gather])
 	SortBySize(blobs, targetKb * 250)
 
 	// download and parse blobs

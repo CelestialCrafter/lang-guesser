@@ -9,6 +9,7 @@ import (
 	"path"
 	"strconv"
 
+	"github.com/CelestialCrafter/lang-guesser/common"
 	"github.com/CelestialCrafter/lang-guesser/db"
 	"github.com/CelestialCrafter/lang-guesser/ratelimit"
 	"github.com/charmbracelet/log"
@@ -43,7 +44,7 @@ func ASTSplitProtocol(data []byte, atEOF bool) (advance int, token []byte, err e
 func ParseBlob(data []byte) ([][]byte, error) {
 	cmd := exec.Command("sh", "start.sh")
 
-	cmd.Dir = path.Join("ast-processors", language) 
+	cmd.Dir = path.Join("ast-processors", *common.Gather) 
 	cmd.Stderr = os.Stderr
 
 	stdin, err := cmd.StdinPipe()
@@ -110,7 +111,7 @@ func DownloadBlob(ctx context.Context, client *github.Client, repo repository, b
 		err = db.CreateChallenge(db.Challenge{
 			Sha: blob.SHA,
 			Code: data,
-			Language: language,
+			Language: *common.Gather,
 		})
 		if err != nil {
 			return err

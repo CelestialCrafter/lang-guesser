@@ -1,5 +1,6 @@
 <script>
 	import { Highlight, LineNumbers } from 'svelte-highlight';
+	import { go, python } from 'svelte-highlight/languages';
 	import rust from 'svelte-highlight/languages/rust';
 	import "svelte-highlight/styles/github.css";
 
@@ -9,6 +10,8 @@
 
 	const languageMap = {
 		rust: rust,
+		go: go,
+		python: python,
 		'': {
 			name: "none",
 			register: () => ({}),

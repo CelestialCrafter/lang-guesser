@@ -15,7 +15,7 @@ func main() {
 	log.SetLevel(log.DebugLevel)
 	db.InitChallenges()
 
-	if *common.Gather {
+	if *common.Gather != "" {
 		gather.Gather()
 	} else {
 		server.SetupServer()
