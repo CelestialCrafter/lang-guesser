@@ -3,11 +3,7 @@
 	import rust from 'svelte-highlight/languages/rust';
 	import "svelte-highlight/styles/github.css";
 
-	import { PUBLIC_API_URL } from '$env/static/public';
-
-	let { next, code, id } = $props();
-	let response = $state(new Promise(() => {}));
-	let language = $state('');
+	let { onnext, onsubmit, code, submission } = $props();
 	let duration = $state(0);
 	let languageInput = $state('');
 
@@ -18,21 +14,6 @@
 			register: () => ({}),
 		}
 	};
-
-	const handleSubmit = () =>
-		response = fetch(`${PUBLIC_API_URL}/api/challenge`, {
-			method: 'POST',
-			body: JSON.stringify({ id, language: languageInput }),
-			headers: {
-				'Content-Type': 'application/json'
-			}
-		})
-		.then(res => res.json())
-		.then(data => {
-			language = data.language;
-			duration = data.duration;
-			return data;
-		});
 
 	const focus = el => el.focus();
 	const setstart = () => {
@@ -52,16 +33,16 @@
 
 <section>
 	<div class="code">
-	<Highlight language={languageMap[language]} {code} let:highlighted>
+	<Highlight language={languageMap[submission?.language ?? '']} {code} let:highlighted>
 		<LineNumbers {highlighted} hideBorder wrapLines />
 	</Highlight>
 	</div>
 
 	<div class="controls">
-	{#await response}
+	{#if !submission}
 		<form>
 			<input bind:value={languageInput} list="language-list" use:focus />
-			<button onclick={handleSubmit}>Submit</button>
+			<button onclick={() => onsubmit(languageInput)}>Submit</button>
 			<span use:setstart>{duration.toFixed(2)}s</span>
 		</form>
 
@@ -70,12 +51,11 @@
 				<option value={language}></option>
 			{/each}
 		</datalist>
-	{:then { more } }
-		<button use:focus onclick={() => next(more)}>Next</button>
-		<span>{languageInput == language ? 'correct!' : 'wrong.'} {duration.toFixed(2)}s</span>
-	{:catch error}
-		<span>could not submit challenge: {error.toString()}</span>
-	{/await}
+	{:else}
+		<button use:focus onclick={onnext}>Next</button>
+		<!-- d / 1e+9 = ns -> s -->
+		<span>{submission.challenge.language == submission.guessed ? 'correct!' : 'wrong.'} {(submission.duration / 1e+9).toFixed(2)}s</span>
+	{/if}
 	</div>
 </section>
 

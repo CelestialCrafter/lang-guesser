@@ -11,14 +11,16 @@ import (
 	"github.com/puzpuzpuz/xsync/v3"
 )
 
+type pastEntry struct {
+	Challenge db.Challenge `json:"challenge"`
+	Guessed string `json:"guessed"`
+	Duration time.Duration `json:"duration"`
+}
+
 type session struct {
 	CurrentChallenge *db.Challenge
 	CurrentStart time.Time
-	Past []struct {
-		Challenge db.Challenge
-		Guessed string
-		Duration time.Duration
-	}
+	Past []pastEntry
 }
 var sessions = xsync.NewMapOf[int64, *session]()
 var id = time.Now().UnixNano()
@@ -39,6 +41,7 @@ func NewChallenge(c echo.Context) error {
 
 	session.CurrentChallenge = challenge
 	session.CurrentStart = time.Now()
+
 	return c.Blob(http.StatusOK, "text/plain", challenge.Code)
 }
 
@@ -62,22 +65,18 @@ func SubmitChallenge(c echo.Context) error {
 	}
 
 	duration := time.Since(session.CurrentStart)
-	session.Past = append(session.Past, struct{Challenge db.Challenge; Guessed string; Duration time.Duration}{
+	session.Past = append(session.Past, pastEntry{
 		Challenge: *session.CurrentChallenge,
 		Guessed: params.Language,
 		Duration: duration,
 	})
-
-	language := session.CurrentChallenge.Language
 	session.CurrentChallenge = nil
 
-	return c.JSON(http.StatusOK, struct{
-		Duration float64 `json:"duration"`
-		Language string `json:"language"`
-		More bool `json:"more"`
-	}{
-		Duration: duration.Seconds(),
-		Language: language,
-		More: true,
-	})
+	strippedPast := make([]pastEntry, len(session.Past))
+	copy(strippedPast,  session.Past)
+	for _, entry := range strippedPast {
+		entry.Challenge.Code = []byte{}
+	}
+
+	return c.JSON(http.StatusOK, strippedPast)
 }
