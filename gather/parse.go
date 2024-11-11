@@ -22,7 +22,7 @@ var patterns = map[string]string{
 	"python": "(function_definition) @capture",
 }
 
-func Parse(source []byte, language string) (sections [][]byte, err error) {
+func ParseSections(source []byte, language string) (sections [][]byte, err error) {
 	grammar, ok := grammars[language]
 	if !ok {
 		return nil, fmt.Errorf("grammar does not exist for language: %s", language)

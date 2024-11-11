@@ -36,14 +36,14 @@
 
 <section>
 	<div class="code">
-	<Highlight language={languageMap[submission?.language ?? '']} {code} let:highlighted>
+	<Highlight language={languageMap[submission?.challenge.language ?? '']} {code} let:highlighted>
 		<LineNumbers {highlighted} hideBorder wrapLines />
 	</Highlight>
 	</div>
 
 	<div class="controls">
 	{#if !submission}
-		<form>
+		<form onsubmit={event => event.preventDefault()}>
 			<input bind:value={languageInput} list="language-list" use:focus />
 			<button onclick={() => onsubmit(languageInput)}>Submit</button>
 			<span use:setstart>{duration.toFixed(2)}s</span>

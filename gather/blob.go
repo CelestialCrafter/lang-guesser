@@ -16,7 +16,7 @@ func DownloadBlob(ctx context.Context, client *github.Client, language string, r
 		return err
 	}
 
-	sections, err := Parse(data, language)
+	sections, err := ParseSections(data, language)
 	if err != nil {
 		return err
 	}

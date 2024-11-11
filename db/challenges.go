@@ -13,6 +13,8 @@ const challengeDbPath = "challenges.db"
 
 var challenges *sqlx.DB
 
+const MIN_LENGTH = 250
+
 func InitChallenges() {
 	if _, err := os.Stat(challengeDbPath); os.IsNotExist(err) {
 		file, err := os.Create(challengeDbPath)
@@ -57,7 +59,7 @@ func CreateChallenge(challenge Challenge) error {
 
 func GetRandomChallenge() (*Challenge, error) {
 	challenge := new(Challenge)
-	err := challenges.Get(challenge, "SELECT * FROM challenges ORDER BY RANDOM() LIMIT 1;")
+	err := challenges.Get(challenge, fmt.Sprintf("SELECT * FROM challenges WHERE length(code) > %d ORDER BY RANDOM() LIMIT 1;", MIN_LENGTH))
 	if err != nil {
 		return nil, fmt.Errorf("database error: %w", err)
 	}
