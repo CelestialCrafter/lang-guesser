@@ -1,22 +1,11 @@
 <script>
 	import { Highlight, LineNumbers } from 'svelte-highlight';
-	import { go, python } from 'svelte-highlight/languages';
-	import rust from 'svelte-highlight/languages/rust';
-	import "svelte-highlight/styles/github.css";
+	import './highlight.css';
+	import { languageToHighlight } from '$lib/languages.js';
 
 	let { onnext, onsubmit, code, submission } = $props();
 	let duration = $state(0);
 	let languageInput = $state('');
-
-	const languageMap = {
-		rust: rust,
-		go: go,
-		python: python,
-		'': {
-			name: "none",
-			register: () => ({}),
-		}
-	};
 
 	const focus = el => el.focus();
 	const setstart = () => {
@@ -36,26 +25,26 @@
 
 <section>
 	<div class="code">
-	<Highlight language={languageMap[submission?.challenge.language ?? '']} {code} let:highlighted>
+	<Highlight language={languageToHighlight[submission?.challenge.language ?? '']} {code} let:highlighted>
 		<LineNumbers {highlighted} hideBorder wrapLines />
 	</Highlight>
 	</div>
 
-	<div class="controls">
+	<div class="inline">
 	{#if !submission}
 		<form onsubmit={event => event.preventDefault()}>
-			<input bind:value={languageInput} list="language-list" use:focus />
-			<button onclick={() => onsubmit(languageInput)}>Submit</button>
+			<input class="input input-bordered" bind:value={languageInput} list="language-list" use:focus />
+			<button class="btn btn-primary" onclick={() => onsubmit(languageInput)}>Submit</button>
 			<span use:setstart>{duration.toFixed(2)}s</span>
 		</form>
 
 		<datalist id="language-list">
-			{#each Object.keys(languageMap) as language}
+			{#each Object.keys(languageToHighlight) as language}
 				<option value={language}></option>
 			{/each}
 		</datalist>
 	{:else}
-		<button use:focus onclick={onnext}>Next</button>
+		<button class="btn btn-primary" use:focus onclick={onnext}>Next</button>
 		<!-- d / 1e+9 = ns -> s -->
 		<span>{submission.challenge.language == submission.guessed ? 'correct!' : 'wrong.'} {(submission.duration / 1e+9).toFixed(2)}s</span>
 	{/if}
@@ -72,9 +61,5 @@ flex-direction: column;
 .code {
 overflow: scroll;
 flex: 1;
-}
-
-.controls {
-display: inherit;
 }
 </style>
