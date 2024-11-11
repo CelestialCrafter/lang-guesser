@@ -51,7 +51,8 @@ func FilterBySuffix(blobs []blob, suffix string) []blob {
 }
 
 func Gather() {
-	_, ok := LangToSuffix[*common.Gather]
+	language := *common.Gather
+	suffix, ok := LangToSuffix[language]
 	if !ok {
 		log.Fatal("language not supported")
 	}
@@ -68,7 +69,7 @@ func Gather() {
 	ctx := context.Background()
 
 	// select repo
-	repos, err := GetRepos(ctx, client, *common.Gather, minStars)
+	repos, err := GetRepos(ctx, client, language, minStars)
 	if err != nil {
 		log.Fatal("could not get repositories", "error", err)
 	}
@@ -87,7 +88,7 @@ func Gather() {
 	}
 
 	// filter and sort
-	blobs = FilterBySuffix(blobs, LangToSuffix[*common.Gather])
+	blobs = FilterBySuffix(blobs, suffix)
 	SortBySize(blobs, targetKb * 250)
 
 	// download and parse blobs
@@ -103,7 +104,7 @@ func Gather() {
 			defer ratelimit.ConcurrentPermits.Release()
 			ratelimit.ConcurrentPermits.Aquire()
 
-			err := DownloadBlob(ctx, client, repo, blobs[i])
+			err := DownloadBlob(ctx, client, language, repo, blobs[i])
 			if err != nil {
 				log.Error("could not download blob", "error", err)
 			}

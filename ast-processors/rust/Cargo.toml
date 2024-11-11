@@ -1,9 +1,0 @@
-[package]
-name = "rust"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-eyre = "0.6.12"
-prettyplease = "0.2.25"
-syn = { version = "2.0.87", features = ["full", "extra-traits"] }
