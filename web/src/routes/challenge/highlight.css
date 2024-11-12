@@ -1,11 +1,7 @@
 pre code.hljs {
-  display: block;
-  overflow-x: auto;
-  padding: 1rem;
-}
-.hljs {
-  color: oklch(var(--bc));
-  background-color: oklch(var(--b1));
+	display: block;
+	overflow-x: auto;
+	padding: 1rem;
 }
 .hljs-doctag,
 .hljs-keyword,
@@ -14,13 +10,13 @@ pre code.hljs {
 .hljs-template-variable,
 .hljs-type,
 .hljs-variable.language_ {
-  color: oklch(var(--er));
+	color: oklch(var(--er));
 }
 .hljs-title,
 .hljs-title.class_,
 .hljs-title.class_.inherited__,
 .hljs-title.function_ {
-  color: oklch(var(--s));
+	color: oklch(var(--s));
 }
 .hljs-attr,
 .hljs-attribute,
@@ -32,49 +28,49 @@ pre code.hljs {
 .hljs-selector-attr,
 .hljs-selector-class,
 .hljs-selector-id {
-  color: oklch(var(--in));
+	color: oklch(var(--in));
 }
 .hljs-regexp,
 .hljs-string,
 .hljs-meta .hljs-string {
-  color: oklch(var(--p));
+	color: oklch(var(--p));
 }
 .hljs-built_in,
 .hljs-symbol {
-  color: oklch(var(--wa));
+	color: oklch(var(--wa));
 }
 .hljs-comment,
 .hljs-code,
 .hljs-formula {
-  color: oklch(var(--n));
+	color: oklch(var(--n));
 }
 .hljs-name,
 .hljs-quote,
 .hljs-selector-tag,
 .hljs-selector-pseudo {
-  color: oklch(var(--su));
+	color: oklch(var(--su));
 }
 .hljs-subst {
-  color: oklch(var(--b1));
+	color: oklch(var(--b1));
 }
 .hljs-section {
-  color: oklch(var(--in));
-  font-weight: bold;
+	color: oklch(var(--in));
+	font-weight: bold;
 }
 .hljs-bullet {
-  color: oklch(var(--wa));
+	color: oklch(var(--wa));
 }
 .hljs-emphasis {
-  color: oklch(var(--b1));
-  font-style: italic;
+	color: oklch(var(--b1));
+	font-style: italic;
 }
 .hljs-strong {
-  color: oklch(var(--b1));
-  font-weight: bold;
+	color: oklch(var(--b1));
+	font-weight: bold;
 }
 .hljs-addition {
-  color: oklch(var(--su));
+	color: oklch(var(--su));
 }
 .hljs-deletion {
-  color: oklch(var(--er));
+	color: oklch(var(--er));
 }

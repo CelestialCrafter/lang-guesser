@@ -6,8 +6,8 @@ export const languageToHighlight = {
 	python: python,
 	go: go,
 	'': {
-		name: "none",
-		register: () => ({}),
+		name: 'none',
+		register: () => ({})
 	}
 };
 
@@ -16,4 +16,3 @@ export const languageToIcon = {
 	python: siPython,
 	go: siGo
 };
-
