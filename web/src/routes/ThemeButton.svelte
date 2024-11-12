@@ -7,6 +7,11 @@
 	};
 </script>
 
-<button class="btn" onclick={fireThemeChangeEvent} data-set-theme={theme}
-	>{theme || 'default'}</button
+<button
+	class="btn"
+	onclick={fireThemeChangeEvent}
+	data-set-theme={theme}
+	data-act-class="btn-primary"
 >
+	{theme || 'default'}
+</button>
