@@ -74,8 +74,8 @@ func SubmitChallenge(c echo.Context) error {
 
 	strippedPast := make([]pastEntry, len(session.Past))
 	copy(strippedPast,  session.Past)
-	for _, entry := range strippedPast {
-		entry.Challenge.Code = []byte{}
+	for i := range strippedPast {
+		strippedPast[i].Challenge.Code = []byte{}
 	}
 
 	return c.JSON(http.StatusOK, strippedPast)
