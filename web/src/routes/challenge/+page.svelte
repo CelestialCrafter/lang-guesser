@@ -5,27 +5,33 @@
 	import Challenge from './Challenge.svelte';
 	import Trail from './Trail.svelte';
 
-	let response = $state(new Promise(() => {}));
+	let code = $state(null);
 	let submissions = $state([]);
 	let currentDuration = $state(0);
 
-	const onnext = () => {
-		response = fetch(`${PUBLIC_API_URL}/api/challenge`).then((res) => res.text());
+	const onnext = async () => {
+		code = await (await fetch(`${PUBLIC_API_URL}/challenge`)).text();
 		submissions.push(null);
 	};
 
-	onMount(onnext);
+	const loadSession = async () =>
+		(submissions = await (await fetch(`${PUBLIC_API_URL}/session`)).json());
 
-	const onsubmit = (language) =>
-		fetch(`${PUBLIC_API_URL}/api/challenge`, {
-			method: 'POST',
-			body: JSON.stringify({ language }),
-			headers: {
-				'Content-Type': 'application/json'
-			}
-		})
-			.then((res) => res.json())
-			.then((data) => (submissions = data));
+	onMount(() => {
+		onnext();
+		loadSession();
+	});
+
+	const onsubmit = async (language) =>
+		(submissions = await (
+			await fetch(`${PUBLIC_API_URL}/challenge`, {
+				method: 'POST',
+				body: JSON.stringify({ language }),
+				headers: {
+					'Content-Type': 'application/json'
+				}
+			})
+		).json());
 </script>
 
 <section class="p-4">
@@ -33,11 +39,11 @@
 
 	<div class="divider"></div>
 
-	{#await response}
+	{#if !code}
 		<div role="alert" class="alert">
 			<span>loading challenge...</span>
 		</div>
-	{:then code}
+	{:else}
 		<Challenge
 			bind:duration={currentDuration}
 			{onsubmit}
@@ -45,9 +51,5 @@
 			{code}
 			submission={submissions[submissions.length - 1]}
 		/>
-	{:catch error}
-		<div role="alert" class="alert alert-error">
-			<span>could not load challenge: {error.toString()}</span>
-		</div>
-	{/await}
+	{/if}
 </section>

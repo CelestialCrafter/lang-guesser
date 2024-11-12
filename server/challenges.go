@@ -45,6 +45,21 @@ func NewChallenge(c echo.Context) error {
 	return c.Blob(http.StatusOK, "text/plain", challenge.Code)
 }
 
+func GetSession(c echo.Context) error {
+	session, ok := sessions.Load(id)
+	if !ok {
+		return jsonError(c, http.StatusBadRequest, errors.New("session does not exist"))
+	}
+
+	strippedPast := make([]pastEntry, len(session.Past))
+	copy(strippedPast,  session.Past)
+	for i := range strippedPast {
+		strippedPast[i].Challenge.Code = []byte{}
+	}
+
+	return c.JSON(http.StatusOK, strippedPast)
+}
+
 func SubmitChallenge(c echo.Context) error {
 	var params struct{
 		Language string `json:"language"`
@@ -72,11 +87,5 @@ func SubmitChallenge(c echo.Context) error {
 	})
 	session.CurrentChallenge = nil
 
-	strippedPast := make([]pastEntry, len(session.Past))
-	copy(strippedPast,  session.Past)
-	for i := range strippedPast {
-		strippedPast[i].Challenge.Code = []byte{}
-	}
-
-	return c.JSON(http.StatusOK, strippedPast)
+	return GetSession(c)
 }
