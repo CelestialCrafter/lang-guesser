@@ -2,8 +2,10 @@
 	import { convert, deserialize, OKLCH, RGBToHex, sRGB } from '@texel/color';
 	import { languageToIcon } from '$lib/languages.js';
 	import { formatDuration } from '$lib';
+	import { onMount } from 'svelte';
 
 	const { submissions, currentDuration } = $props();
+	let theme = $state('');
 
 	const createIconUrl = (language) => {
 		if (!language) return '';
@@ -23,6 +25,8 @@
 			node.scroll(node.scrollWidth, 0);
 		});
 	};
+
+	onMount(() => window.addEventListener('theme', (event) => (theme = event.detail)));
 </script>
 
 <section use:scrollEnd class="overflow-x-scroll scroll-smooth">
@@ -35,13 +39,15 @@
 					challenge: { language }
 				} = submission}
 				{@const stepClass = guessed == language ? 'step-success' : 'step-error'}
-				<li
-					style="--icon: {createIconUrl(submission?.challenge.language)};"
-					class="step use-icon {stepClass}"
-					data-content=""
-				>
-					{formatDuration(duration)}
-				</li>
+				{#key theme}
+					<li
+						style="--icon: {createIconUrl(submission?.challenge.language)};"
+						class="step use-icon {stepClass}"
+						data-content=""
+					>
+						{formatDuration(duration)}
+					</li>
+				{/key}
 			{:else}
 				<li class="step" data-content="">{formatDuration(currentDuration)}</li>
 			{/if}

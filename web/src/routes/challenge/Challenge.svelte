@@ -3,7 +3,7 @@
 	import './highlight.css';
 	import { languageToHighlight } from '$lib/languages.js';
 
-	let { onnext, onsubmit, code, submission, duration = $bindable() } = $props();
+	let { onnext, onsubmit, more, code, submission, duration = $bindable() } = $props();
 	let disabled = $state(false);
 	let languageInput = $state('');
 
@@ -63,12 +63,16 @@
 					onclick={() => {
 						disabled = true;
 						onsubmit(languageInput);
+						languageInput = '';
+						disabled = false;
 					}}
 				>
 					Submit
 				</button>
 			{:else}
-				<button class="btn btn-primary" use:focus onclick={onnext}>Next</button>
+				<button class="btn btn-primary" use:focus onclick={onnext}
+					>{more ? 'Next' : 'Finish'}</button
+				>
 			{/if}
 		</form>
 		<datalist id="language-list">

@@ -25,14 +25,19 @@ type session struct {
 var sessions = xsync.NewMapOf[int64, *session]()
 var id = time.Now().UnixNano()
 
-func NewChallenge(c echo.Context) error {
-	session, _ := sessions.Compute(id, func(oldValue *session, loaded bool) (newValue *session, delete bool) {
-		if loaded {
-			return oldValue, false
-		}
+func newChallengeAllowed(session *session) bool {
+	return len(session.Past) < 10 - 1
+}
 
-		return new(session), false
-	})
+func NewChallenge(c echo.Context) error {
+	session, ok := sessions.Load(id)
+	if !ok {
+		return jsonError(c, http.StatusBadRequest, errors.New("session does not exist"))
+	}
+
+	if !newChallengeAllowed(session) {
+		return jsonError(c, http.StatusBadRequest, errors.New("new challenges disabled for session"))
+	}
 
 	challenge, err := db.GetRandomChallenge()
 	if err != nil {
@@ -45,19 +50,26 @@ func NewChallenge(c echo.Context) error {
 	return c.Blob(http.StatusOK, "text/plain", challenge.Code)
 }
 
-func GetSession(c echo.Context) error {
-	session, ok := sessions.Load(id)
-	if !ok {
-		return jsonError(c, http.StatusBadRequest, errors.New("session does not exist"))
-	}
-
+func stripPast(session *session) []pastEntry {
 	strippedPast := make([]pastEntry, len(session.Past))
 	copy(strippedPast,  session.Past)
 	for i := range strippedPast {
 		strippedPast[i].Challenge.Code = []byte{}
 	}
 
-	return c.JSON(http.StatusOK, strippedPast)
+	return strippedPast
+}
+
+func GetSession(c echo.Context) error {
+	session, _ := sessions.Compute(id, func(oldValue *session, loaded bool) (newValue *session, delete bool) {
+		if loaded {
+			return oldValue, false
+		}
+
+		return new(session), false
+	})
+
+	return c.JSON(http.StatusOK, stripPast(session))
 }
 
 func SubmitChallenge(c echo.Context) error {
@@ -87,5 +99,11 @@ func SubmitChallenge(c echo.Context) error {
 	})
 	session.CurrentChallenge = nil
 
-	return GetSession(c)
+	return c.JSON(http.StatusOK, struct{
+		More bool `json:"more"`
+		Past []pastEntry `json:"past"`
+	}{
+		More: newChallengeAllowed(session),
+		Past: stripPast(session),
+	})
 }
