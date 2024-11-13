@@ -42,7 +42,7 @@ pre code.hljs {
 .hljs-comment,
 .hljs-code,
 .hljs-formula {
-	color: oklch(var(--n));
+	color: oklch(var(--nc));
 }
 .hljs-name,
 .hljs-quote,
