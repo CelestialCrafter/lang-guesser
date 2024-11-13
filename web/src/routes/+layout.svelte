@@ -33,8 +33,6 @@
 			<FontButton {font} />
 		{/each}
 	</div>
-	
-	
 
 	<div class="divider"></div>
 

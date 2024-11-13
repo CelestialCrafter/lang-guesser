@@ -1,29 +1,30 @@
 <script>
 	import { Highlight, LineNumbers } from 'svelte-highlight';
-	import './highlight.css';
 	import { languageToHighlight } from '$lib/languages.js';
+	import './highlight.css';
 
 	let { onnext, onsubmit, more, code, submission, duration = $bindable() } = $props();
-	let disabled = $state(false);
-	let languageInput = $state('');
+	let submitDisabled = $state(false);
+	let language = $state('');
 
-	const focus = (el) => el.focus();
-	const setstart = () => {
-		$effect(() => {
-			let last_time = performance.now();
-			const update = (time) => {
-				frame = requestAnimationFrame(update);
-				duration += (time - last_time) * 1e6;
-				last_time = time;
-			};
+	$effect(() => {
+		let last_time = performance.now();
+		const update = (time) => {
+			frame = requestAnimationFrame(update);
+			duration += (time - last_time) * 1e6;
+			last_time = time;
+		};
 
-			let frame = requestAnimationFrame(update);
-			return () => {
-				duration = 0;
-				cancelAnimationFrame(frame);
-			};
-		});
-	};
+		let frame = requestAnimationFrame(update);
+		return () => {
+			duration = 0;
+			cancelAnimationFrame(frame);
+		};
+	});
+
+	$effect(() => {
+		if (!submission) language = '';
+	});
 
 	const guessedCorrectly = $derived(
 		submission ? submission.challenge.language == submission.guessed : null
@@ -31,6 +32,8 @@
 	const dotsClass = $derived(
 		guessedCorrectly !== null ? (guessedCorrectly ? 'success-dots' : 'error-dots') : ''
 	);
+
+	const focus = el => el.focus();
 </script>
 
 <section class="card card-compact bg-base-200 shadow-xl">
@@ -46,33 +49,35 @@
 		</div>
 
 		<form
-			class="card-actions items-center {submission ? 'justify-end' : 'justify-between'}"
-			use:setstart
+			class="card-actions items-center justify-between"
 			onsubmit={(event) => event.preventDefault()}
 		>
+			<input
+				class="input input-bordered"
+				disabled={submitDisabled}
+				bind:value={language}
+				use:focus
+				list="language-list"
+			/>
+
 			{#if !submission}
-				<input
-					class="input input-bordered"
-					bind:value={languageInput}
-					list="language-list"
-					use:focus
-				/>
 				<button
 					class="btn btn-primary"
-					{disabled}
-					onclick={() => {
-						disabled = true;
-						onsubmit(languageInput);
-						languageInput = '';
-						disabled = false;
+					disabled={submitDisabled}
+					onclick={event => {
+						event.target.setAttribute('disabled', '');
+						onsubmit(language);
 					}}
 				>
 					Submit
 				</button>
 			{:else}
-				<button class="btn btn-primary" use:focus onclick={onnext}
-					>{more ? 'Next' : 'Finish'}</button
+				<button
+					class="btn btn-primary"
+					onclick={onnext}
 				>
+					{more ? 'Next' : 'Finish'}
+				</button>
 			{/if}
 		</form>
 		<datalist id="language-list">
