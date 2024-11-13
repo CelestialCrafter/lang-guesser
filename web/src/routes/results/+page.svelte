@@ -12,10 +12,7 @@
 		submissions.reduce((acc, x) => acc + (x.guessed === x.challenge.language), 0)
 	);
 
-	const time = $derived(
-		submissions.reduce((acc, x) => acc + (x.duration), 0)
-	);
-console.log($inspect(time))
+	const time = $derived(submissions.reduce((acc, x) => acc + x.duration, 0));
 </script>
 
 <section>

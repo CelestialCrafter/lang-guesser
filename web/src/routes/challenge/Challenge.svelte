@@ -2,10 +2,9 @@
 	import { Highlight, LineNumbers } from 'svelte-highlight';
 	import { languageToHighlight } from '$lib/languages.js';
 	import './highlight.css';
+	import ChallengeForm from './ChallengeForm.svelte';
 
-	let { onnext, onsubmit, more, code, submission, duration = $bindable() } = $props();
-	let submitDisabled = $state(false);
-	let language = $state('');
+	let { onnext, more, code, submission, duration = $bindable() } = $props();
 
 	$effect(() => {
 		let last_time = performance.now();
@@ -22,18 +21,12 @@
 		};
 	});
 
-	$effect(() => {
-		if (!submission) language = '';
-	});
-
 	const guessedCorrectly = $derived(
 		submission ? submission.challenge.language == submission.guessed : null
 	);
 	const dotsClass = $derived(
 		guessedCorrectly !== null ? (guessedCorrectly ? 'success-dots' : 'error-dots') : ''
 	);
-
-	const focus = el => el.focus();
 </script>
 
 <section class="card card-compact bg-base-200 shadow-xl">
@@ -48,38 +41,7 @@
 			</Highlight>
 		</div>
 
-		<form
-			class="card-actions items-center justify-between"
-			onsubmit={(event) => event.preventDefault()}
-		>
-			<input
-				class="input input-bordered"
-				disabled={submitDisabled}
-				bind:value={language}
-				use:focus
-				list="language-list"
-			/>
-
-			{#if !submission}
-				<button
-					class="btn btn-primary"
-					disabled={submitDisabled}
-					onclick={event => {
-						event.target.setAttribute('disabled', '');
-						onsubmit(language);
-					}}
-				>
-					Submit
-				</button>
-			{:else}
-				<button
-					class="btn btn-primary"
-					onclick={onnext}
-				>
-					{more ? 'Next' : 'Finish'}
-				</button>
-			{/if}
-		</form>
+		<ChallengeForm {onnext} {onsubmit} {more} {submission} />
 		<datalist id="language-list">
 			{#each Object.keys(languageToHighlight) as language}
 				<option value={language}></option>

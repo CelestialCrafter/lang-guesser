@@ -21,4 +21,3 @@ export const setFont = (font) => {
 	font = font ? `${font}, ${defaultFont}` : defaultFont;
 	window.dispatchEvent(new CustomEvent('font', { detail: font }));
 };
-
