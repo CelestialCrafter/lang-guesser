@@ -15,7 +15,7 @@
 	const time = $derived(submissions.reduce((acc, x) => acc + x.duration, 0));
 </script>
 
-<section>
+<section class="p-4">
 	<SubmissionTrail {submissions} />
 
 	<div class="divider"></div>

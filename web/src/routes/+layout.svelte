@@ -3,8 +3,7 @@
 	import { setTheme, setFont, setDefaultFont } from '$lib';
 
 	import '../app.css';
-	import ThemeButton from '$lib/customization/ThemeButton.svelte';
-	import FontButton from '$lib/customization/FontButton.svelte';
+	import Navigation from './Navigation.svelte';
 
 	let { children } = $props();
 
@@ -24,17 +23,5 @@
 	});
 </script>
 
-<section class="p-4">
-	<div class="flex flex-wrap gap-2">
-		{#each ['', 'rosepine', 'rosepine-moon', 'rosepine-dawn'] as theme}
-			<ThemeButton {theme} />
-		{/each}
-		{#each ['', 'JetBrainsMono', 'Monaspace Neon', 'FiraCode'] as font}
-			<FontButton {font} />
-		{/each}
-	</div>
-
-	<div class="divider"></div>
-
-	{@render children()}
-</section>
+<Navigation />
+{@render children()}

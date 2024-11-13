@@ -11,7 +11,7 @@
 		if (!language) return '';
 
 		let { svg } = languageToIcon[language];
-		const oklch = getComputedStyle(document.querySelector(':root')).getPropertyValue('--b3');
+		const oklch = getComputedStyle(document.querySelector(':root')).getPropertyValue('--b2');
 		const { coords } = deserialize(`oklch(${oklch})`);
 		const rgb = convert(coords, OKLCH, sRGB);
 		svg = svg.replace('<svg', `<svg fill="${RGBToHex(rgb)}"`);

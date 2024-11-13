@@ -38,21 +38,23 @@
 	};
 </script>
 
-<SubmissionTrail {submissions} {currentDuration} />
+<section class="p-4">
+	<SubmissionTrail {submissions} {currentDuration} />
 
-<div class="divider"></div>
+	<div class="divider"></div>
 
-{#if !code}
-	<div role="alert" class="alert">
-		<span>loading challenge...</span>
-	</div>
-{:else}
-	<Challenge
-		bind:duration={currentDuration}
-		{onsubmit}
-		{onnext}
-		{code}
-		{more}
-		submission={submissions[submissions.length - 1]}
-	/>
-{/if}
+	{#if !code}
+		<div role="alert" class="alert">
+			<span>loading challenge...</span>
+		</div>
+	{:else}
+		<Challenge
+			bind:duration={currentDuration}
+			{onsubmit}
+			{onnext}
+			{code}
+			{more}
+			submission={submissions[submissions.length - 1]}
+		/>
+	{/if}
+</section>

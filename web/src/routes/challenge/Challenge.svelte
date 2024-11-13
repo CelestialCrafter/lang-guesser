@@ -4,7 +4,7 @@
 	import './highlight.css';
 	import ChallengeForm from './ChallengeForm.svelte';
 
-	let { onnext, more, code, submission, duration = $bindable() } = $props();
+	let { onnext, onsubmit, more, code, submission, duration = $bindable() } = $props();
 
 	$effect(() => {
 		let last_time = performance.now();
