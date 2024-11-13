@@ -3,8 +3,8 @@
 	import { setTheme, setFont, setDefaultFont } from '$lib';
 
 	import '../app.css';
-	import ThemeButton from './ThemeButton.svelte';
-	import FontButton from './FontButton.svelte';
+	import ThemeButton from '$lib/customization/ThemeButton.svelte';
+	import FontButton from '$lib/customization/FontButton.svelte';
 
 	let { children } = $props();
 
