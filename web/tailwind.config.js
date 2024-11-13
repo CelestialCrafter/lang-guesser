@@ -5,7 +5,7 @@ export default {
 	content: ['./src/**/*.{html,svelte,js}'],
 	plugins: [daisyui],
 	daisyui: {
-		darkTheme: "rosepine",
+		darkTheme: 'rosepine',
 		themes: [
 			{
 				'rosepine-dawn': {
@@ -45,5 +45,5 @@ export default {
 			'cupcake',
 			'sunset'
 		]
-	},
+	}
 };

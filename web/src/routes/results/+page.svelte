@@ -12,14 +12,33 @@
 	);
 </script>
 
-<SubmissionTrail {submissions} />
+<section>
+	<SubmissionTrail {submissions} />
 
-<div class="divider"></div>
+	<div class="divider"></div>
 
-<div class="stats shadow-xl">
-	<div class="stat">
-		<span class="stat-title">Correct</span>
-		<span class="stat-value text-primary">{correct}/{submissions.length}</span>
-		<span class="stat-desc">top x% of all users</span>
+	<div class="bg-base-200 stats shadow-xl">
+		<div class="stat text-primary">
+			<span class="stat-title">Points</span>
+			<span class="stat-value">x</span>
+			<span class="stat-desc">#X on leaderboard</span>
+		</div>
+		<div class="stat">
+			<span class="stat-title">Mode</span>
+			<span class="stat-value">X</span>
+		</div>
 	</div>
-</div>
+
+	<div class="bg-base-200 stats shadow-xl text-secondary">
+		<div class="stat">
+			<span class="stat-title">Correct</span>
+			<span class="stat-value">{correct}/{submissions.length}</span>
+			<span class="stat-desc">top X% of all users</span>
+		</div>
+		<div class="stat">
+			<span class="stat-title">Time</span>
+			<span class="stat-value">Xs</span>
+			<span class="stat-desc">top X% of all users</span>
+		</div>
+	</div>
+</section>

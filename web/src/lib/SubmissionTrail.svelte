@@ -29,7 +29,7 @@
 	onMount(() => window.addEventListener('theme', (event) => (theme = event.detail)));
 </script>
 
-<section use:scrollEnd class="overflow-x-scroll scroll-smooth">
+<div use:scrollEnd class="overflow-x-scroll scroll-smooth">
 	<ul class="steps">
 		{#each submissions as submission}
 			{#if submission}
@@ -53,7 +53,7 @@
 			{/if}
 		{/each}
 	</ul>
-</section>
+</div>
 
 <style>
 	.use-icon::after {
@@ -61,9 +61,5 @@
 		background-position: center;
 		background-repeat: no-repeat;
 		background-size: 1.7rem;
-	}
-
-	section {
-		scrollbar-width: none;
 	}
 </style>

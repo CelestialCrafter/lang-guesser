@@ -1,17 +1,13 @@
 <script>
-	const { theme } = $props();
+	import { setTheme } from '$lib';
 
-	const fireThemeChangeEvent = () => {
-		const event = new CustomEvent('theme', { detail: localStorage.getItem('theme') });
-		window.dispatchEvent(event);
-	};
+	const { theme } = $props();
 </script>
 
 <button
 	class="btn"
-	onclick={fireThemeChangeEvent}
+	onclick={(event) => setTheme(event.target.dataset.setTheme)}
 	data-set-theme={theme}
-	data-act-class="btn-primary"
 >
 	{theme || 'default'}
 </button>
