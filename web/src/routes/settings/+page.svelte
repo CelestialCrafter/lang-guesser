@@ -9,7 +9,7 @@
 	let CurrentComponent = $derived(currentPage[1]);
 </script>
 
-<div class="flex flex-column">
+<div class="flex">
 	<ul class="menu bg-base-200 w-64 h-screen">
 		<li>
 			<h2 class="menu-title">Settings</h2>
@@ -25,7 +25,5 @@
 		</li>
 	</ul>
 
-	<section class="p-4 grow">
-		<CurrentComponent />
-	</section>
+	<CurrentComponent />
 </div>

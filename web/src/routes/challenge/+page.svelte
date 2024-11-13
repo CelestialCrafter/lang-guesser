@@ -20,7 +20,12 @@
 		submissions.push(null);
 	};
 
-	onMount(() => loadSession().then(() => onnext()));
+	onMount(() => {
+		(async () => {
+			submissions = await loadSession();
+			await onnext();
+		})();
+	});
 
 	const onsubmit = async (language) => {
 		let data = await (

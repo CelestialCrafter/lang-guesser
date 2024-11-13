@@ -6,16 +6,3 @@ export const formatDuration = (ns) => {
 
 	return s.toFixed(2) + 's';
 };
-
-export const setTheme = (theme) => {
-	theme = theme || '';
-	window.dispatchEvent(new CustomEvent('theme', { detail: theme }));
-};
-
-let defaultFont = '';
-export const setDefaultFont = (font) => (defaultFont = font);
-
-export const setFont = (font) => {
-	font = font ? `${font}, ${defaultFont}` : defaultFont;
-	window.dispatchEvent(new CustomEvent('font', { detail: font }));
-};

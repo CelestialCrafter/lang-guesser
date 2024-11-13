@@ -41,7 +41,7 @@ export default {
 					success: '#9ccfd8',
 					warning: '#f6c177',
 					error: '#eb6f92'
-				},
+				}
 			},
 			catppuccin('latte'),
 			catppuccin('frappe'),
