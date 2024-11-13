@@ -3,6 +3,9 @@ pre code.hljs {
 	overflow-x: auto;
 	padding: 1rem;
 }
+.hljs {
+	color: oklch(var(--bc));
+}
 .hljs-doctag,
 .hljs-keyword,
 .hljs-meta .hljs-keyword,
