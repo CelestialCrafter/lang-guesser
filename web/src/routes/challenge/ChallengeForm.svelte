@@ -1,9 +1,20 @@
 <script>
-	let { onnext, onsubmit, more, submission } = $props();
+	let { onnext, onsubmit, more, submission, duration = $bindable() } = $props();
 	let language = null;
 
 	$effect(() => {
-		if (!submission) language.value = '';
+		let last_time = performance.now();
+		const update = (time) => {
+			frame = requestAnimationFrame(update);
+			duration += (time - last_time) * 1e6;
+			last_time = time;
+		};
+
+		let frame = requestAnimationFrame(update);
+		return () => {
+			duration = 0;
+			cancelAnimationFrame(frame);
+		};
 	});
 
 	const focus = (el) => el.focus();
@@ -31,8 +42,10 @@
 			use:focus
 			class="btn btn-primary"
 			onclick={() => {
+				language.value = '';
 				language.removeAttribute('disabled');
 				language.focus();
+				duration = 0;
 				onnext();
 			}}
 		>

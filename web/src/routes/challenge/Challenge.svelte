@@ -6,21 +6,6 @@
 
 	let { onnext, onsubmit, more, code, submission, duration = $bindable() } = $props();
 
-	$effect(() => {
-		let last_time = performance.now();
-		const update = (time) => {
-			frame = requestAnimationFrame(update);
-			duration += (time - last_time) * 1e6;
-			last_time = time;
-		};
-
-		let frame = requestAnimationFrame(update);
-		return () => {
-			duration = 0;
-			cancelAnimationFrame(frame);
-		};
-	});
-
 	const guessedCorrectly = $derived(
 		submission ? submission.challenge.language == submission.guessed : null
 	);
@@ -41,7 +26,7 @@
 			</Highlight>
 		</div>
 
-		<ChallengeForm {onnext} {onsubmit} {more} {submission} />
+		<ChallengeForm {onnext} {onsubmit} {more} {submission} bind:duration />
 		<datalist id="language-list">
 			{#each Object.keys(languageToHighlight) as language}
 				<option value={language}></option>
