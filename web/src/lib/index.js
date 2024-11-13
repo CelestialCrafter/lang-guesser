@@ -9,7 +9,6 @@ export const formatDuration = (ns) => {
 
 export const setTheme = (theme) => {
 	theme = theme || '';
-	localStorage.setItem('theme', theme);
 	window.dispatchEvent(new CustomEvent('theme', { detail: theme }));
 };
 
@@ -17,7 +16,6 @@ let defaultFont = '';
 export const setDefaultFont = (font) => (defaultFont = font);
 
 export const setFont = (font) => {
-	localStorage.setItem('font', font || '');
 	font = font ? `${font}, ${defaultFont}` : defaultFont;
 	window.dispatchEvent(new CustomEvent('font', { detail: font }));
 };

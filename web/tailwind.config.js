@@ -1,4 +1,5 @@
 import daisyui from 'daisyui';
+import catppuccin from '@catppuccin/daisyui';
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -40,10 +41,12 @@ export default {
 					success: '#9ccfd8',
 					warning: '#f6c177',
 					error: '#eb6f92'
-				}
+				},
 			},
-			'cupcake',
-			'sunset'
+			catppuccin('latte'),
+			catppuccin('frappe'),
+			catppuccin('macchiato'),
+			catppuccin('mocha')
 		]
 	}
 };

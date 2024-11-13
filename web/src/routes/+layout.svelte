@@ -9,17 +9,28 @@
 
 	onMount(() => {
 		window.addEventListener(
-			'theme',
-			(event) => (document.documentElement.dataset.theme = event.detail)
-		);
-		window.addEventListener(
 			'font',
 			(event) => (document.documentElement.style.fontFamily = event.detail)
 		);
 
-		setTheme(localStorage.getItem('theme'));
+		window.addEventListener(
+			'theme',
+			(event) => (document.documentElement.dataset.theme = event.detail)
+		);
+
+		window.addEventListener(
+			'storage',
+			() => setCustomization()
+		);
+
 		setDefaultFont(getComputedStyle(document.documentElement).fontFamily);
-		setFont(localStorage.getItem('font'));
+		const setCustomization = () => {
+			setTheme(localStorage.getItem('theme'));
+			setFont(localStorage.getItem('font'));
+		};
+
+		setCustomization();
+		window.onstorage = setCustomization;
 	});
 </script>
 
