@@ -20,13 +20,22 @@ type Google struct {
 	config *oauth2.Config
 }
 
+type googleClaims struct {
+	ID string `json:"id"`
+	Picture string `json:"picture"`
+	Name string `json:"name"`
+}
 
 func NewGoogleProvider() Google {
 	return Google {
 		config: &oauth2.Config{
 			ClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 			ClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
-			Scopes:       []string{"openid", "email"},
+			Scopes:       []string{
+				"openid",
+			 	"https://www.googleapis.com/auth/userinfo.email",
+			 	"https://www.googleapis.com/auth/userinfo.profile",
+			},
 			RedirectURL:  redirectUrl,
 			Endpoint:     google.Endpoint,
 		},
@@ -57,19 +66,21 @@ func (g Google) Exchange(code string) (*auth.UserClaims, error) {
 	}
 
 	// sign token
+	googleClaims := new(googleClaims)
+	err = json.Unmarshal(body, googleClaims)
+	if err != nil {
+		return nil, err
+	}
+
 	claims := &auth.UserClaims{
-		ID: "",
+		ID: fmt.Sprint("google-", googleClaims.ID),
+		Username: googleClaims.Name,
+		Picture: googleClaims.Picture,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 24 * 7)),
 		},
 	}
 
-	err = json.Unmarshal(body, &claims)
-	if err != nil {
-		return nil, err
-	}
-
-	claims.ID = fmt.Sprint("google-", claims.ID)
 	return claims, nil
 }
 

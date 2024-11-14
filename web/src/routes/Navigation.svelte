@@ -1,9 +1,10 @@
 <script>
 	import { base } from '$app/paths';
+	import { token } from '$lib/auth.js';
 	const routes = {
 		settings: '⚙️',
 		challenge: '⚔️',
-		auth
+		auth : token ? auth : '🔒'
 	};
 </script>
 
@@ -11,8 +12,8 @@
 	<div class="avatar">
 		<img
 			class="rounded-full"
-			alt="Username"
-			src="https://avatars.githubusercontent.com/u/44733683"
+			alt={token.username}
+			src={token.picture}
 		/>
 	</div>
 {/snippet}

@@ -55,6 +55,7 @@
 		"@catppuccin/daisyui": "^1.1.2",
 		"@sveltejs/adapter-static": "^3.0.6",
 		"@texel/color": "^1.1.4",
+		"jose": "^5.9.6",
 		"simple-icons": "^13.16.0",
 		"svelte-highlight": "^7.7.0"
 	}

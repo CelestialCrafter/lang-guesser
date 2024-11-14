@@ -73,10 +73,10 @@ func OAuthCallback(c echo.Context) error {
 	<html>
 	<script>
 	localStorage.setItem("token", "%s");
-	window.location.assign("/app");
+	window.location.assign("/app/app");
 	</script>
 
-	Click <a href="/app">here</a> to go back
+	Click <a href="/app/auth">here</a> to continue
 	</html>
 	`, token))
 }
