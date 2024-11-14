@@ -14,8 +14,6 @@ import (
 	"golang.org/x/oauth2/google"
 )
 
-const redirectUrl = "http://localhost:8080/api/auth/google/callback"
-
 type Google struct {
 	config *oauth2.Config
 }
@@ -36,7 +34,7 @@ func NewGoogleProvider() Google {
 			 	"https://www.googleapis.com/auth/userinfo.email",
 			 	"https://www.googleapis.com/auth/userinfo.profile",
 			},
-			RedirectURL:  redirectUrl,
+			RedirectURL:  "http://localhost:8080/api/auth/google/callback",
 			Endpoint:     google.Endpoint,
 		},
 	}

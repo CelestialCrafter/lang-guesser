@@ -12,6 +12,7 @@ var providers = map[string]Provider{}
 func InitializeProviders() {
 	providers = map[string]Provider{
 		"google": NewGoogleProvider(),
+		"github": NewGithubProvider(),
 	}
 }
 
