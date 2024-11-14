@@ -3,8 +3,8 @@
 	import { token } from '$lib/auth.js';
 	const routes = {
 		settings: '⚙️',
-		challenge: '⚔️',
-		auth : token ? auth : '🔒'
+		auth : token ? auth : '🔒',
+		challenge: '⚔️'
 	};
 </script>
 
