@@ -3,18 +3,14 @@
 	import { token } from '$lib/auth.js';
 	const routes = {
 		settings: '⚙️',
-		auth : token ? auth : '🔒',
+		auth: token ? auth : '🔒',
 		challenge: '⚔️'
 	};
 </script>
 
 {#snippet auth()}
 	<div class="avatar">
-		<img
-			class="rounded-full"
-			alt={token.username}
-			src={token.picture}
-		/>
+		<img class="rounded-full" alt={token.username} src={token.picture} />
 	</div>
 {/snippet}
 

@@ -5,12 +5,25 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/CelestialCrafter/lang-guesser/common"
 	"github.com/CelestialCrafter/lang-guesser/common/auth"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
 )
+
+func JwtMiddleware() echo.MiddlewareFunc {
+	config := echojwt.Config{
+		NewClaimsFunc: func(c echo.Context) jwt.Claims {
+			return new(auth.UserClaims)
+		},
+		SigningKey: []byte(os.Getenv("JWT_SECRET")),
+	}
+	return echojwt.WithConfig(config)
+}
 
 func OAuthInit(c echo.Context) error {
 	provider, ok := providers[c.Param("provider")]
