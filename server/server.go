@@ -13,12 +13,6 @@ const (
 	svelteDevAddress = "http://localhost:5173"
 )
 
-func jsonError(c echo.Context, status int, err error) error {
-	return c.JSON(status, echo.Map{
-		"message": err.Error(),
-	})
-}
-
 func getRequestId(c echo.Context) string {
 	id := c.Response().Header().Get(echo.HeaderXRequestID)
 	if id == "" {

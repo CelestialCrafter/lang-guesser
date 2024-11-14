@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/CelestialCrafter/lang-guesser/common"
 	"github.com/CelestialCrafter/lang-guesser/db"
 	"github.com/labstack/echo/v4"
 	"github.com/puzpuzpuz/xsync/v3"
@@ -32,16 +33,16 @@ func newChallengeAllowed(session *session) bool {
 func NewChallenge(c echo.Context) error {
 	session, ok := sessions.Load(id)
 	if !ok {
-		return jsonError(c, http.StatusBadRequest, errors.New("session does not exist"))
+		return common.JsonError(c, http.StatusBadRequest, errors.New("session does not exist"))
 	}
 
 	if !newChallengeAllowed(session) {
-		return jsonError(c, http.StatusBadRequest, errors.New("new challenges disabled for session"))
+		return common.JsonError(c, http.StatusBadRequest, errors.New("new challenges disabled for session"))
 	}
 
 	challenge, err := db.GetRandomChallenge()
 	if err != nil {
-		return jsonError(c, http.StatusInternalServerError, err)
+		return common.JsonError(c, http.StatusInternalServerError, err)
 	}
 
 	session.CurrentChallenge = challenge
@@ -79,16 +80,16 @@ func SubmitChallenge(c echo.Context) error {
 
 	err := c.Bind(&params)
 	if err != nil {
-		return jsonError(c, http.StatusBadRequest, fmt.Errorf("could not bind params: %w", err))
+		return common.JsonError(c, http.StatusBadRequest, fmt.Errorf("could not bind params: %w", err))
 	}
 
 	session, ok := sessions.Load(id)
 	if !ok {
-		return jsonError(c, http.StatusBadRequest, errors.New("session does not exist"))
+		return common.JsonError(c, http.StatusBadRequest, errors.New("session does not exist"))
 	}
 
 	if session.CurrentChallenge == nil {
-		return jsonError(c, http.StatusBadRequest, errors.New("no challenge started"))
+		return common.JsonError(c, http.StatusBadRequest, errors.New("no challenge started"))
 	}
 
 	duration := time.Since(session.CurrentStart)
