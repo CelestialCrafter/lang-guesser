@@ -9,7 +9,10 @@
 </div>
 
 <span class="text-xl">Logged in as {token.username}</span>
-<button onclick={() => {
-	localStorage.removeItem('token');
-	location.reload();
-}} class="btn btn-primary">Log Out</button>
+<button
+	onclick={() => {
+		localStorage.removeItem('token');
+		location.reload();
+	}}
+	class="btn btn-primary">Log Out</button
+>

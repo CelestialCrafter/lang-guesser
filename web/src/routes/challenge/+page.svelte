@@ -7,6 +7,7 @@
 	import { loadSession } from '$lib/session.js';
 	import { goto } from '$app/navigation';
 	import { base } from '$app/paths';
+	import { jwt } from '$lib/auth.js';
 
 	let code = $state(null);
 	let more = $state(true);
@@ -16,7 +17,13 @@
 	const onnext = async () => {
 		if (!more) return await goto(base + '/results');
 
-		code = await (await fetch(`${PUBLIC_API_URL}/challenge`)).text();
+		code = await (
+			await fetch(`${PUBLIC_API_URL}/challenge`, {
+				headers: {
+					Authorization: `Bearer ${jwt}`
+				}
+			})
+		).text();
 		submissions.push(null);
 	};
 
@@ -33,7 +40,8 @@
 				method: 'POST',
 				body: JSON.stringify({ language }),
 				headers: {
-					'Content-Type': 'application/json'
+					'Content-Type': 'application/json',
+					Authorization: `Bearer ${jwt}`
 				}
 			})
 		).json();
