@@ -9,7 +9,8 @@
 		'Catppuccin Latte': 'latte',
 		'Catppuccin Frappé': 'frappe',
 		'Catppuccin Macchiato': 'macchiato',
-		'Catppuccin Mocha': 'mocha'
+		'Catppuccin Mocha': 'mocha',
+		'Qtile Rice': 'qtile-rice'
 	};
 
 	const fonts = {
@@ -23,14 +24,16 @@
 </script>
 
 {#snippet control(type, name, value)}
+{@const active = value == customization[type + 'Raw']}
 	<div class="form-control">
 		<label class="label cursor-pointer gap-4">
 			<span class="label-text">{name}</span>
 			<input
-				checked={value == customization[type + 'Raw']}
+				checked={active}
 				type="radio"
 				name="{type}-radios"
 				class="radio"
+				class:radio-secondary={active}
 				onclick={() => (customization[type] = value)}
 			/>
 		</label>
