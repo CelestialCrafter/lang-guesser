@@ -22,12 +22,13 @@ func svelte(e *echo.Echo) {
 		g.Use(middleware.Proxy(middleware.NewRoundRobinBalancer([]*middleware.ProxyTarget{{
 			URL: svelteDevUrl,
 		}})))
-		e.Static("/app/static", "web/static/")
+		g.Static("/static", "web/static/")
 	} else {
 		log.Info("using built site")
 		g.Use(middleware.StaticWithConfig(middleware.StaticConfig{
 			HTML5: true,
 			Root:  "web/build/",
 		}))
+		g.Static("/_app", "web/build/_app")
 	}
 }
