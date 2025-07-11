@@ -7,18 +7,18 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func setupRoutes(e *echo.Echo) {
-	svelte(e)
-
-	e.GET("/", func(c echo.Context) error {
+func setupRoutes(initial *echo.Echo) {
+	svelte(initial)
+	initial.GET("/", func(c echo.Context) error {
 		return c.Redirect(http.StatusSeeOther, "/app")
 	})
 
-	a := e.Group("/api")
-	a.Use(auth.JwtMiddleware())
-	a.GET("/session", GetSession).Name = "get-session"
-	a.GET("/challenge", NewChallenge).Name = "new-challenge"
-	a.POST("/challenge", SubmitChallenge).Name = "submit-challenge"
-	a.GET("/auth/:provider", auth.OAuthInit).Name = "oauth-init"
-	a.GET("/auth/:provider/callback", auth.OAuthCallback).Name = "oauth-callback"
+	api := initial.Group("/api")
+	api.GET("/auth/:provider", auth.OAuthInit).Name = "oauth-init"
+	api.GET("/auth/:provider/callback", auth.OAuthCallback).Name = "oauth-callback"
+
+	authApi := api.Group("", auth.JwtMiddleware())
+	authApi.GET("/session", GetSession).Name = "get-session"
+	authApi.GET("/challenge", NewChallenge).Name = "new-challenge"
+	authApi.POST("/challenge", SubmitChallenge).Name = "submit-challenge"
 }

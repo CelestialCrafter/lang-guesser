@@ -10,7 +10,6 @@
 		'Catppuccin Frappé': 'frappe',
 		'Catppuccin Macchiato': 'macchiato',
 		'Catppuccin Mocha': 'mocha',
-		'Qtile Rice': 'qtile-rice'
 	};
 
 	const fonts = {

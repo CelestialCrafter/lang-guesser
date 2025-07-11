@@ -1,17 +1,17 @@
 @layer base {
 	@font-face {
 		font-family: 'Monaspace Neon';
-		src: url(/static/MonaspaceNeon-VF.woff2) format(woff2);
+		src: url(/MonaspaceNeon-VF.woff2) format(woff2);
 	}
 
 	@font-face {
 		font-family: 'FiraCode';
-		src: url(/static/FiraCode-VF.woff2) format(woff2);
+		src: url(/FiraCode-VF.woff2) format(woff2);
 	}
 
 	@font-face {
 		font-family: 'JetBrainsMono';
-		src: url(/static/JetBrainsMono-Regular.woff2) format(woff2);
+		src: url(/JetBrainsMono-Regular.woff2) format(woff2);
 	}
 }
 
